@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBill - Factură Storno</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+    <style>
+        .storno-container {
+            padding: 30px;
+        }
+        
+        .storno-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .storno-title {
+            font-size: 24px;
+            color: var(--dark);
+            font-weight: 300;
+        }
+        
+        .storno-form {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-row-triple {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .form-input:read-only {
+            background-color: #f8f9fa;
+            color: #666;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .storno-values-section {
+            background: #ffe6e6;
+            padding: 20px;
+            border-radius: var(--radius);
+            border-left: 4px solid var(--danger);
+            margin-bottom: 20px;
+        }
+        
+        .storno-values-title {
+            font-size: 16px;
+            color: var(--danger);
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .values-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .original-values {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: var(--radius);
+            border-left: 3px solid var(--success);
+        }
+        
+        .storno-values {
+            background: #ffe6e6;
+            padding: 15px;
+            border-radius: var(--radius);
+            border-left: 3px solid var(--danger);
+        }
+        
+        .values-title {
+            font-weight: 500;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .value-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .value-row.total {
+            font-weight: 600;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        /* Modal styles pentru preview */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 30px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .modal-actions {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            color: var(--dark);
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: var(--dark);
+        }
+
+        /* Storno Preview Modal - LARGER */
+        .storno-preview-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .preview-modal-content {
+            background-color: white;
+            margin: 1% auto;
+            padding: 0;
+            border-radius: var(--radius);
+            width: 95%;
+            max-width: 1200px;
+            height: 95vh;
+            overflow: hidden;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .preview-tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .preview-tab.active {
+            background: white;
+            border-bottom-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .preview-tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .email-content {
+            display: none;
+        }
+
+        .email-content.active {
+            display: block;
+        }
+
+        /* Storno Print Styles */
+        .storno-print {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .storno-header-print {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--danger);
+        }
+
+        .company-info h1 {
+            color: var(--danger);
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .company-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .storno-details {
+            text-align: right;
+        }
+
+        .storno-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--danger);
+            margin-bottom: 10px;
+        }
+
+        .storno-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .client-info, .storno-dates {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: var(--radius);
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: var(--danger);
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .storno-reason {
+            background: #ffe6e6;
+            padding: 20px;
+            border-radius: var(--radius);
+            border-left: 4px solid var(--danger);
+            margin-bottom: 30px;
+        }
+
+        .storno-comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .storno-comparison-table th {
+            background: var(--danger);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .storno-comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .storno-comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .positive-value {
+            color: var(--success);
+        }
+
+        .negative-value {
+            color: var(--danger);
+        }
+
+        .storno-totals {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .totals-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .original-totals, .storno-totals-section {
+            padding: 20px;
+            border-radius: var(--radius);
+        }
+
+        .original-totals {
+            background: #e8f5e8;
+            border-left: 4px solid var(--success);
+        }
+
+        .storno-totals-section {
+            background: #ffe6e6;
+            border-left: 4px solid var(--danger);
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .total-line.final {
+            font-weight: bold;
+            font-size: 18px;
+            border-bottom: 2px solid #333;
+            margin-top: 10px;
+        }
+
+        .storno-notes {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-top: 30px;
+        }
+
+        .storno-footer-print {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Email Form Styles */
+        .email-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .email-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .email-form .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .email-form .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+        }
+
+        .email-form .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Preview Actions */
+        .preview-actions {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .btn-print {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-send-email {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Storno List */
+        .storno-list {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-top: 30px;
+        }
+
+        .list-header {
+            background: var(--danger);
+            color: white;
+            padding: 20px;
+            border-radius: var(--radius) var(--radius) 0 0;
+            font-weight: 500;
+            font-size: 18px;
+        }
+
+        .storno-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .storno-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .storno-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .storno-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-emis {
+            background: #ffe6e6;
+            color: var(--danger);
+        }
+
+        /* Print styles */
+        @media print {
+            .preview-tabs,
+            .preview-actions,
+            .modal-header,
+            .sidebar,
+            .main-content header {
+                display: none !important;
+            }
+
+            .preview-modal-content {
+                width: 100% !important;
+            }
+
+            .preview-content {
+                padding: 0 !important;
+            }
+
+            .storno-print {
+                max-width: none !important;
+                box-shadow: none !important;
+            }
+
+            body {
+                background: white !important;
+            }
+        }
+
+        /* Toast notifications customization */
+        .toast-success {
+            background-color: var(--success) !important;
+        }
+        
+        .toast-error {
+            background-color: var(--danger) !important;
+        }
+        
+        .toast-warning {
+            background-color: var(--warning) !important;
+        }
+        
+        .toast-info {
+            background-color: var(--primary) !important;
+        }
+        
+        /* Sticky form actions */
+        .form-actions {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h2>💰 SmartBill</h2>
+                <span>FACTURARE</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item">📊 Dashboard</a>
+                <div class="nav-group">
+                    <span class="nav-title">📄 Emitere</span>
+                    <a href="/factura" class="nav-subitem">Factură</a>
+                    <a href="/bon-fiscal" class="nav-subitem">Bon Fiscal</a>
+                    <a href="/factura-storno" class="nav-subitem active">Factură Storno</a>
+                </div>
+                <a href="/rapoarte" class="nav-item">📈 Rapoarte</a>
+                <a href="/configurare" class="nav-item">⚙️ Configurare</a>
+                <div class="nav-group">
+                    <span class="nav-title">📝 Nomenclatoare</span>
+                    <a href="/produse" class="nav-subitem">Produse</a>
+                    <a href="/clienti" class="nav-subitem">Clienți</a>
+                </div>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <header>
+                <h1>Factură Storno</h1>
+                <div class="user-info">
+                    <span>TIP B. SRL</span>
+                </div>
+            </header>
+
+            <div class="storno-container">
+                <div class="storno-header">
+                    <h2 class="storno-title">Factură Storno Nouă</h2>
+                </div>
+
+                <form id="stornoForm" class="storno-form">
+                    <!-- Informații Factură Storno -->
+                    <div class="form-section">
+                        <h3 class="section-title">Informații Factură Storno</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Număr Factură Originală</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" class="form-input" id="originalInvoiceNumber" placeholder="FACT-001" required style="flex: 1;">
+                                    <button type="button" class="btn-secondary" onclick="searchOriginalInvoice()" style="padding: 12px 20px; white-space: nowrap;">
+                                        🔍 Caută
+                                    </button>
+                                </div>
+                                <small style="color: #666; margin-top: 5px; display: block;">💡 Introduce numărul (ex: FACT-001) și ieși din câmp pentru căutare automată</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data Emiterii Storno</label>
+                                <input type="date" class="form-input" id="stornoDate" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Motiv Storno</label>
+                            <select class="form-select" id="stornoReason" required>
+                                <option value="">Selectează motivul pentru storno</option>
+                                <option value="Eroare în datele clientului">Eroare în datele clientului</option>
+                                <option value="Produs indisponibil">Produs indisponibil</option>
+                                <option value="Client a renunțat">Client a renunțat la comandă</option>
+                                <option value="Eroare în calculul TVA">Eroare în calculul TVA</option>
+                                <option value="Factură duplicată">Factură duplicată</option>
+                                <option value="Eroare în produse">Eroare în produse/servicii</option>
+                                <option value="Alte motive">Alte motive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Informații Client -->
+                    <div class="form-section">
+                        <h3 class="section-title">Informații Client</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Selectează Client</label>
+                                <select class="form-select" id="clientSelect" required>
+                                    <option value="">Selectează clientul</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nume Client</label>
+                                <input type="text" class="form-input" id="clientName" readonly>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">CIF/CNP</label>
+                                <input type="text" class="form-input" id="clientCIF" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="clientEmail" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Valori Factură Originală -->
+                    <div class="form-section">
+                        <h3 class="section-title">Valori Factură Originală</h3>
+                        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #27ae60;">
+                            <strong>💡 Cum se completează automat:</strong>
+                            <ul style="margin: 10px 0 0 20px; color: #2c3e50;">
+                                <li><strong>🔍 Caut factura FACT-001</strong> → se completează totul automat (client + valori)</li>
+                                <li><strong>👤 Selectez client din combo</strong> → se încarcă ultima factură a clientului</li>
+                                <li><strong>✏️ Completez manual</strong> → introduc o valoare, restul se calculează cu TVA 19%</li>
+                                <li><strong>📋 Facturi demo disponibile:</strong> FACT-001, FACT-002, ... FACT-010</li>
+                            </ul>
+                        </div>
+                        <div class="form-row-triple">
+                            <div class="form-group">
+                                <label class="form-label">Subtotal Original (RON)</label>
+                                <input type="number" class="form-input" id="originalSubtotal" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">TVA Original (RON)</label>
+                                <input type="number" class="form-input" id="originalTVA" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Total Original (RON)</label>
+                                <input type="number" class="form-input" id="originalTotal" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparație Valori -->
+                    <div class="storno-values-section">
+                        <div class="storno-values-title">Comparație Valori - Original vs Storno</div>
+                        <div class="values-comparison">
+                            <div class="original-values">
+                                <div class="values-title">💚 Valori Originale</div>
+                                <div class="value-row">
+                                    <span>Subtotal:</span>
+                                    <span id="displayOriginalSubtotal">0.00 RON</span>
+                                </div>
+                                <div class="value-row">
+                                    <span>TVA:</span>
+                                    <span id="displayOriginalTVA">0.00 RON</span>
+                                </div>
+                                <div class="value-row total">
+                                    <span>TOTAL:</span>
+                                    <span id="displayOriginalTotal">0.00 RON</span>
+                                </div>
+                            </div>
+                            <div class="storno-values">
+                                <div class="values-title">❌ Valori Storno</div>
+                                <div class="value-row">
+                                    <span>Subtotal:</span>
+                                    <span id="displayStornoSubtotal">0.00 RON</span>
+                                </div>
+                                <div class="value-row">
+                                    <span>TVA:</span>
+                                    <span id="displayStornoTVA">0.00 RON</span>
+                                </div>
+                                <div class="value-row total">
+                                    <span>TOTAL:</span>
+                                    <span id="displayStornoTotal">0.00 RON</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observații -->
+                    <div class="form-section">
+                        <h3 class="section-title">Observații Suplimentare</h3>
+                        <div class="form-group">
+                            <label class="form-label">Detalii despre motivul storno</label>
+                            <textarea class="form-textarea" id="stornoNotes" rows="4" placeholder="Descriere detaliată a motivului pentru care se face storno facturii..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Acțiuni -->
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="resetStornoForm()">
+                            🔄 Resetează
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="window.location.href='/dashboard'">
+                            ❌ Anulează
+                        </button>
+                        <button type="submit" class="btn-danger">
+                            💥 Emite Factură Storno
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Lista Facturilor Storno -->
+                <div class="storno-list">
+                    <div class="list-header">
+                        📋 Facturi Storno Emise
+                    </div>
+                    <div class="table-container">
+                        <table class="storno-table" id="stornoTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Factură Originală</th>
+                                    <th>Client</th>
+                                    <th>Data Storno</th>
+                                    <th>Total Original</th>
+                                    <th>Total Storno</th>
+                                    <th>Motiv</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Preview Factură Storno -->
+    <div id="stornoPreviewModal" class="storno-preview-modal">
+        <div class="preview-modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Previzualizare Factură Storno</h3>
+                <span class="close" onclick="closeStornoPreviewModal()">&times;</span>
+            </div>
+            
+            <div class="preview-tabs">
+                <div class="preview-tab active" onclick="showStornoPreviewTab('print')">
+                    🖨️ Previzualizare Print
+                </div>
+                <div class="preview-tab" onclick="showStornoPreviewTab('email')">
+                    📧 Trimitere Email
+                </div>
+            </div>
+            
+            <div class="preview-content">
+                <!-- Print Content -->
+                <div id="stornoPrintContent" class="print-content">
+                    <div class="storno-print" id="stornoPrintHTML">
+                        <!-- Conținutul facturii storno pentru print va fi generat dinamic -->
+                    </div>
+                </div>
+
+                <!-- Email Content -->
+                <div id="stornoEmailContent" class="email-content">
+                    <div class="email-form">
+                        <div class="form-group">
+                            <label class="form-label">Adresa Email Destinatar</label>
+                            <input type="email" class="form-input" id="stornoEmailTo" placeholder="client@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CC (opțional)</label>
+                            <input type="email" class="form-input" id="stornoEmailCC" placeholder="cont@firma.ro">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Subiect</label>
+                            <input type="text" class="form-input" id="stornoEmailSubject" value="Factură Storno">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mesaj</label>
+                            <textarea class="form-textarea" id="stornoEmailMessage" placeholder="Bună ziua,
+
+Vă trimit atașată factura storno pentru anularea facturii anterioare.
+
+Motivul storno: [Motiv]
+
+Pentru orice întrebări, vă rog să mă contactați.
+
+Cu stimă,
+TIP B. SRL"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="stornoAttachPDF" checked> Atașează factura storno ca PDF
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview-actions">
+                <button type="button" class="btn-secondary" onclick="closeStornoPreviewModal()">
+                    Închide
+                </button>
+                <button type="button" class="btn-print" onclick="printStornoInvoice()" id="stornoPrintBtn">
+                    🖨️ Imprimă
+                </button>
+                <button type="button" class="btn-send-email" onclick="sendStornoInvoiceEmail()" id="stornoEmailBtn" style="display: none;">
+                    📧 Trimite Email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Verifică dacă toastr s-a încărcat
+        if (typeof toastr === 'undefined') {
+            console.error('❌ TOASTR NU S-A ÎNCĂRCAT! Înlocuiesc cu console.log');
+            window.toastr = {
+                success: (msg) => console.log('✅ SUCCESS:', msg),
+                error: (msg) => console.error('❌ ERROR:', msg),
+                warning: (msg) => console.warn('⚠️ WARNING:', msg),
+                info: (msg) => console.log('ℹ️ INFO:', msg)
+            };
+        } else {
+            console.log('✅ Toastr s-a încărcat cu succes!');
+        }
+        
+        // Initialize toastr
+        if (typeof toastr.options !== 'undefined') {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "5000",
+                "extendedTimeOut": "2000"
+            };
+        }
+
+        let clients = [];
+        let stornoInvoices = [];
+        let currentStornoData = null;
+
+        // Inițializează data curentă și încarcă lista
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded pentru factură storno');
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('stornoDate').value = today;
+            
+            loadClients();
+            loadStornoInvoices();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Auto-calculate storno values when original values change
+            document.getElementById('originalSubtotal').addEventListener('input', calculateStornoValues);
+            document.getElementById('originalTVA').addEventListener('input', calculateStornoValues);
+            document.getElementById('originalTotal').addEventListener('input', calculateStornoValues);
+
+            // Client selection
+            document.getElementById('clientSelect').addEventListener('change', handleClientSelect);
+
+            // Form submission
+            document.getElementById('stornoForm').addEventListener('submit', handleStornoSubmit);
+
+            // Search original invoice automatically
+            document.getElementById('originalInvoiceNumber').addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    searchOriginalInvoice();
+                }
+            });
+        }
+
+        // Funcție pentru calcularea valorilor storno - CORECTATĂ
+        function calculateStornoValues() {
+            let subtotalOriginal = parseFloat(document.getElementById('originalSubtotal').value) || 0;
+            let tvaOriginal = parseFloat(document.getElementById('originalTVA').value) || 0;
+            let totalOriginal = parseFloat(document.getElementById('originalTotal').value) || 0;
+
+            console.log('📊 Valori introduse:', { subtotal: subtotalOriginal, tva: tvaOriginal, total: totalOriginal });
+
+            // Rata TVA standard în România
+            const TVA_RATE = 0.19; // 19%
+            
+            // LOGICA DE CALCUL INTELIGENT
+            
+            // Cazul 1: Dacă avem doar SUBTOTAL → calculează TVA și TOTAL
+            if (subtotalOriginal > 0 && tvaOriginal === 0 && totalOriginal === 0) {
+                tvaOriginal = subtotalOriginal * TVA_RATE;
+                totalOriginal = subtotalOriginal + tvaOriginal;
+                
+                document.getElementById('originalTVA').value = tvaOriginal.toFixed(2);
+                document.getElementById('originalTotal').value = totalOriginal.toFixed(2);
+                
+                console.log('💡 Calculat din SUBTOTAL: TVA=' + tvaOriginal.toFixed(2) + ', TOTAL=' + totalOriginal.toFixed(2));
+                toastr.info('💡 TVA și Total calculate automat din Subtotal');
+            }
+            // Cazul 2: Dacă avem doar TOTAL → calculează SUBTOTAL și TVA
+            else if (totalOriginal > 0 && subtotalOriginal === 0 && tvaOriginal === 0) {
+                subtotalOriginal = totalOriginal / (1 + TVA_RATE);
+                tvaOriginal = totalOriginal - subtotalOriginal;
+                
+                document.getElementById('originalSubtotal').value = subtotalOriginal.toFixed(2);
+                document.getElementById('originalTVA').value = tvaOriginal.toFixed(2);
+                
+                console.log('💡 Calculat din TOTAL: SUBTOTAL=' + subtotalOriginal.toFixed(2) + ', TVA=' + tvaOriginal.toFixed(2));
+                toastr.info('💡 Subtotal și TVA calculate automat din Total');
+            }
+            // Cazul 3: Dacă avem SUBTOTAL și TVA → calculează TOTAL
+            else if (subtotalOriginal > 0 && tvaOriginal > 0 && totalOriginal === 0) {
+                totalOriginal = subtotalOriginal + tvaOriginal;
+                document.getElementById('originalTotal').value = totalOriginal.toFixed(2);
+                
+                console.log('💡 Calculat TOTAL din SUBTOTAL + TVA: ' + totalOriginal.toFixed(2));
+                toastr.info('💡 Total calculat automat din Subtotal + TVA');
+            }
+            // Cazul 4: Dacă avem SUBTOTAL și TOTAL → calculează TVA
+            else if (subtotalOriginal > 0 && totalOriginal > 0 && tvaOriginal === 0) {
+                tvaOriginal = totalOriginal - subtotalOriginal;
+                document.getElementById('originalTVA').value = tvaOriginal.toFixed(2);
+                
+                console.log('💡 Calculat TVA din TOTAL - SUBTOTAL: ' + tvaOriginal.toFixed(2));
+                toastr.info('💡 TVA calculat automat din Total - Subtotal');
+            }
+
+            // VALIDĂRI LOGICE
+            const calculatedTotal = subtotalOriginal + tvaOriginal;
+            if (Math.abs(calculatedTotal - totalOriginal) > 0.02) { // Toleranță de 2 bani pentru rotunjiri
+                console.warn('⚠️ Eroare calcul: Subtotal + TVA ≠ Total');
+                console.warn(`   Subtotal (${subtotalOriginal}) + TVA (${tvaOriginal}) = ${calculatedTotal}`);
+                console.warn(`   Dar Total = ${totalOriginal}`);
+                
+                // Corectează automat totalul
+                totalOriginal = subtotalOriginal + tvaOriginal;
+                document.getElementById('originalTotal').value = totalOriginal.toFixed(2);
+                toastr.warning('⚠️ Total corectat automat pentru a se potrivi cu Subtotal + TVA');
+            }
+
+            // Actualizează valorile afișate ORIGINALE
+            document.getElementById('displayOriginalSubtotal').textContent = subtotalOriginal.toFixed(2) + ' RON';
+            document.getElementById('displayOriginalTVA').textContent = tvaOriginal.toFixed(2) + ' RON';
+            document.getElementById('displayOriginalTotal').textContent = totalOriginal.toFixed(2) + ' RON';
+
+            // Valorile STORNO sunt negative (anulează factura originală)
+            const stornoSubtotal = -subtotalOriginal;
+            const stornoTVA = -tvaOriginal;
+            const stornoTotal = -totalOriginal;
+
+            // Actualizează valorile afișate STORNO
+            document.getElementById('displayStornoSubtotal').textContent = stornoSubtotal.toFixed(2) + ' RON';
+            document.getElementById('displayStornoTVA').textContent = stornoTVA.toFixed(2) + ' RON';
+            document.getElementById('displayStornoTotal').textContent = stornoTotal.toFixed(2) + ' RON';
+            
+            console.log('📊 Valori finale calculate:', {
+                original: { subtotal: subtotalOriginal, tva: tvaOriginal, total: totalOriginal },
+                storno: { subtotal: stornoSubtotal, tva: stornoTVA, total: stornoTotal }
+            });
+            
+            // Verificare finală că totul e în regulă
+            if (subtotalOriginal > 0 && tvaOriginal > 0 && totalOriginal > 0) {
+                console.log('✅ Toate valorile sunt pozitive și corecte');
+            }
+        }
+
+        // Gestionează selectarea clientului - CORECTATĂ
+        async function handleClientSelect() {
+            const clientId = this.value;
+            const client = clients.find(c => c.ID == clientId);
+            
+            console.log('👤 Client selectat pentru storno:', client);
+            
+            if (client) {
+                // Completează informațiile de bază ale clientului
+                document.getElementById('clientName').value = client.Nume;
+                document.getElementById('clientCIF').value = client.CIF;
+                document.getElementById('clientEmail').value = client.Client_Email || '';    // ✅ CORECT
+                
+                console.log('✅ Detalii client completate:', {
+                    nume: client.Nume,
+                    cif: client.CIF,
+                    email: client.Client_Email
+                });
+                
+                // Caută și încarcă ultima factură a clientului
+                await searchClientLastInvoice(client);
+                
+            } else {
+                // Resetează toate câmpurile dacă nu e client selectat
+                document.getElementById('clientName').value = '';
+                document.getElementById('clientCIF').value = '';
+                document.getElementById('clientEmail').value = '';
+                
+                // Resetează valorile financiare
+                document.getElementById('originalSubtotal').value = '';
+                document.getElementById('originalTVA').value = '';
+                document.getElementById('originalTotal').value = '';
+                document.getElementById('originalInvoiceNumber').value = '';
+                
+                // Resetează afișajul
+                calculateStornoValues();
+                
+                console.log('🔄 Toate câmpurile resetate');
+            }
+        }
+
+        // Funcție pentru căutarea ultimei facturi a clientului - CORECTATĂ
+        async function searchClientLastInvoice(client) {
+            try {
+                console.log('🔍 Caut facturile pentru clientul:', client.Nume);
+                
+                toastr.info(`🔍 Caut facturile pentru ${client.Nume}...`);
+                
+                const response = await fetch('/api/search_facturi', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        client_cif: client.CIF
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('📄 Facturile clientului găsite:', result);
+                
+                if (result.success && result.data.length > 0) {
+                    // Ia ultima factură (cea mai recentă)
+                    const latestInvoice = result.data[0];
+                    console.log('📋 Ultima factură:', latestInvoice);
+                    
+                    // Populează valorile financiare din ultima factură
+                    document.getElementById('originalSubtotal').value = parseFloat(latestInvoice.subtotal || 0).toFixed(2);
+                    document.getElementById('originalTVA').value = parseFloat(latestInvoice.tva || 0).toFixed(2);
+                    document.getElementById('originalTotal').value = parseFloat(latestInvoice.total || 0).toFixed(2);
+                    
+                    // Populează și numărul facturii ca sugestie
+                    document.getElementById('originalInvoiceNumber').value = latestInvoice.numar_factura || '';
+                    
+                    // Calculează valorile storno
+                    calculateStornoValues();
+                    
+                    toastr.success(`✅ Datele din factura ${latestInvoice.numar_factura} (${latestInvoice.total} RON) au fost încărcate!`);
+                    
+                } else {
+                    console.log('ℹ️ Nu s-au găsit facturi pentru acest client');
+                    toastr.info(`ℹ️ Nu s-au găsit facturi anterioare pentru ${client.Nume}`);
+                    
+                    // Resetează valorile dacă nu sunt facturi
+                    document.getElementById('originalSubtotal').value = '';
+                    document.getElementById('originalTVA').value = '';
+                    document.getElementById('originalTotal').value = '';
+                    document.getElementById('originalInvoiceNumber').value = '';
+                    calculateStornoValues();
+                }
+                
+            } catch (error) {
+                console.error('❌ Eroare la căutarea facturilor clientului:', error);
+                toastr.warning(`⚠️ Nu s-au putut încărca facturile pentru ${client.Nume}: ${error.message}`);
+            }
+        }
+
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/get_clienti');
+                const data = await response.json();
+                clients = data;
+                
+                const clientSelect = document.getElementById('clientSelect');
+                clientSelect.innerHTML = '<option value="">Selectează clientul</option>';
+                
+                clients.forEach(client => {
+                    const option = document.createElement('option');
+                    option.value = client.ID;
+                    option.textContent = `${client.Nume} (${client.CIF})`;
+                    clientSelect.appendChild(option);
+                });
+                
+                toastr.success('Clienții au fost încărcați cu succes!');
+            } catch (error) {
+                console.error('Eroare la încărcarea clienților:', error);
+                toastr.error('Eroare la încărcarea clienților: ' + error.message);
+            }
+        }
+
+        // Funcție pentru încărcarea listei de storno
+        async function loadStornoInvoices() {
+            try {
+                const response = await fetch('/api/get_facturi_storno');
+                const stornos = await response.json();
+                
+                const tbody = document.querySelector('#stornoTable tbody');
+                tbody.innerHTML = '';
+                
+                if (stornos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #666;">Nu există facturi storno</td></tr>';
+                    return;
+                }
+                
+                stornos.forEach(storno => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${storno.id}</td>
+                        <td>${storno.numar_factura_originala}</td>
+                        <td>${storno.client_nume}</td>
+                        <td>${storno.data_emitere}</td>
+                        <td class="positive-value">${storno.total_original} RON</td>
+                        <td class="negative-value">${storno.total_storno} RON</td>
+                        <td>${storno.motiv_storno}</td>
+                        <td><span class="status-badge status-${storno.status.toLowerCase().replace(' ', '')}">${storno.status}</span></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('❌ Eroare la încărcarea listei storno:', error);
+            }
+        }
+
+
+
+        // Gestionează trimiterea formularului storno - VALIDARE ÎMBUNĂTĂȚITĂ
+        async function handleStornoSubmit(event) {
+            event.preventDefault();
+            
+            console.log('📝 === TRIMIT FACTURA STORNO ===');
+            
+            // Validări de bază
+            const originalInvoiceNumber = document.getElementById('originalInvoiceNumber').value.trim();
+            const stornoReason = document.getElementById('stornoReason').value;
+            const clientId = document.getElementById('clientSelect').value;
+            
+            if (!originalInvoiceNumber) {
+                toastr.error('❌ Numărul facturii originale este obligatoriu');
+                document.getElementById('originalInvoiceNumber').focus();
+                return;
+            }
+            
+            if (!stornoReason) {
+                toastr.error('❌ Motivul storno este obligatoriu');
+                document.getElementById('stornoReason').focus();
+                return;
+            }
+            
+            if (!clientId) {
+                toastr.error('❌ Selectarea clientului este obligatorie');
+                document.getElementById('clientSelect').focus();
+                return;
+            }
+            
+            // Validări financiare
+            const originalSubtotal = parseFloat(document.getElementById('originalSubtotal').value) || 0;
+            const originalTVA = parseFloat(document.getElementById('originalTVA').value) || 0;
+            const originalTotal = parseFloat(document.getElementById('originalTotal').value) || 0;
+            
+            if (originalTotal <= 0) {
+                toastr.error('❌ Valorile facturii originale trebuie să fie completate și pozitive');
+                document.getElementById('originalTotal').focus();
+                return;
+            }
+            
+            if (originalSubtotal <= 0) {
+                toastr.error('❌ Subtotalul trebuie să fie pozitiv');
+                document.getElementById('originalSubtotal').focus();
+                return;
+            }
+            
+            // Verificare logică: Subtotal + TVA = Total
+            const calculatedTotal = originalSubtotal + originalTVA;
+            if (Math.abs(calculatedTotal - originalTotal) > 0.02) {
+                toastr.error(`❌ Eroare în calcule: Subtotal (${originalSubtotal}) + TVA (${originalTVA}) ≠ Total (${originalTotal})`);
+                return;
+            }
+            
+            console.log('✅ Toate validările au trecut');
+
+            // Prepare storno data for preview
+            currentStornoData = prepareStornoData();
+            
+            console.log('📊 Date storno pregătite:', currentStornoData);
+            
+            // Open preview modal
+            openStornoPreviewModal();
+        }
+
+        function prepareStornoData() {
+            const clientId = document.getElementById('clientSelect').value;
+            const selectedClient = clients.find(c => c.ID == clientId);
+            
+            const originalSubtotal = parseFloat(document.getElementById('originalSubtotal').value) || 0;
+            const originalTVA = parseFloat(document.getElementById('originalTVA').value) || 0;
+            const originalTotal = parseFloat(document.getElementById('originalTotal').value) || 0;
+
+            return {
+                originalInvoiceNumber: document.getElementById('originalInvoiceNumber').value,
+                stornoDate: document.getElementById('stornoDate').value,
+                stornoReason: document.getElementById('stornoReason').value,
+                client: selectedClient,
+                originalSubtotal: originalSubtotal,
+                originalTVA: originalTVA,
+                originalTotal: originalTotal,
+                stornoSubtotal: -originalSubtotal,
+                stornoTVA: -originalTVA,
+                stornoTotal: -originalTotal,
+                notes: document.getElementById('stornoNotes').value
+            };
+        }
+
+        function openStornoPreviewModal() {
+            // Generate print content
+            generateStornoPrintContent();
+            
+            // Populate email fields
+            if (currentStornoData.client && currentStornoData.client.Client_Email) {
+                document.getElementById('stornoEmailTo').value = currentStornoData.client.Client_Email;
+            }
+            document.getElementById('stornoEmailSubject').value = `Factură Storno pentru ${currentStornoData.originalInvoiceNumber}`;
+            
+            // Update email message with reason
+            const emailMessage = document.getElementById('stornoEmailMessage');
+            let message = emailMessage.value;
+            message = message.replace('[Motiv]', currentStornoData.stornoReason);
+            emailMessage.value = message;
+            
+            // Show modal
+            document.getElementById('stornoPreviewModal').style.display = 'block';
+            showStornoPreviewTab('print');
+        }
+
+        function closeStornoPreviewModal() {
+            document.getElementById('stornoPreviewModal').style.display = 'none';
+        }
+
+        function showStornoPreviewTab(tabName) {
+            // Update tabs
+            document.querySelectorAll('.preview-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Show corresponding content
+            if (tabName === 'print') {
+                document.getElementById('stornoPrintContent').style.display = 'block';
+                document.getElementById('stornoEmailContent').style.display = 'none';
+                document.getElementById('stornoPrintBtn').style.display = 'inline-block';
+                document.getElementById('stornoEmailBtn').style.display = 'none';
+            } else if (tabName === 'email') {
+                document.getElementById('stornoPrintContent').style.display = 'none';
+                document.getElementById('stornoEmailContent').style.display = 'block';
+                document.getElementById('stornoPrintBtn').style.display = 'none';
+                document.getElementById('stornoEmailBtn').style.display = 'inline-block';
+            }
+        }
+
+        function generateStornoPrintContent() {
+            const data = currentStornoData;
+            const printContent = document.getElementById('stornoPrintHTML');
+            
+            printContent.innerHTML = `
+                <div class="storno-header-print">
+                    <div class="company-info">
+                        <h1>TIP B. SRL</h1>
+                        <p><strong>CIF:</strong> RO12345678</p>
+                        <p><strong>Nr. Reg. Com.:</strong> J40/1234/2020</p>
+                        <p><strong>Adresa:</strong> Str. Exemplu, Nr. 123, București</p>
+                        <p><strong>Telefon:</strong> 021 123 4567</p>
+                        <p><strong>Email:</strong> office@tipb.ro</p>
+                    </div>
+                    <div class="storno-details">
+                        <div class="storno-number">FACTURĂ STORNO</div>
+                        <div class="storno-number">STORN-${Date.now().toString().slice(-3)}</div>
+                    </div>
+                </div>
+
+                <div class="storno-info-grid">
+                    <div class="client-info">
+                        <div class="info-title">Client:</div>
+                        <p><strong>${data.client.Nume}</strong></p>
+                        <p>CIF: ${data.client.CIF}</p>
+                        <p>Email: ${data.client.Client_Email || ''}</p>
+                        <p>Telefon: ${data.client.Client_Telefon || ''}</p>
+                        <p>Localitate: ${data.client.Client_Localitate || ''}</p>
+                    </div>
+                    <div class="storno-dates">
+                        <div class="info-title">Detalii Storno:</div>
+                        <p><strong>Factură originală:</strong> ${data.originalInvoiceNumber}</p>
+                        <p><strong>Data storno:</strong> ${formatDate(data.stornoDate)}</p>
+                        <p><strong>Motiv storno:</strong> ${data.stornoReason}</p>
+                    </div>
+                </div>
+
+                <div class="storno-reason">
+                    <div class="info-title">Motivul Storno:</div>
+                    <p><strong>${data.stornoReason}</strong></p>
+                    ${data.notes ? `<p>${data.notes}</p>` : ''}
+                </div>
+
+                <table class="storno-comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Tip Valoare</th>
+                            <th>Subtotal</th>
+                            <th>TVA</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Valori Originale</strong></td>
+                            <td class="positive-value">${data.originalSubtotal.toFixed(2)} RON</td>
+                            <td class="positive-value">${data.originalTVA.toFixed(2)} RON</td>
+                            <td class="positive-value">${data.originalTotal.toFixed(2)} RON</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Valori Storno</strong></td>
+                            <td class="negative-value">${data.stornoSubtotal.toFixed(2)} RON</td>
+                            <td class="negative-value">${data.stornoTVA.toFixed(2)} RON</td>
+                            <td class="negative-value">${data.stornoTotal.toFixed(2)} RON</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="storno-totals">
+                    <div class="totals-grid">
+                        <div class="original-totals">
+                            <div class="info-title">💚 Valori Factură Originală</div>
+                            <div class="total-line">
+                                <span>Subtotal:</span>
+                                <span>${data.originalSubtotal.toFixed(2)} RON</span>
+                            </div>
+                            <div class="total-line">
+                                <span>TVA:</span>
+                                <span>${data.originalTVA.toFixed(2)} RON</span>
+                            </div>
+                            <div class="total-line final">
+                                <span>TOTAL ORIGINAL:</span>
+                                <span>${data.originalTotal.toFixed(2)} RON</span>
+                            </div>
+                        </div>
+                        <div class="storno-totals-section">
+                            <div class="info-title">❌ Valori Storno</div>
+                            <div class="total-line">
+                                <span>Subtotal:</span>
+                                <span>${data.stornoSubtotal.toFixed(2)} RON</span>
+                            </div>
+                            <div class="total-line">
+                                <span>TVA:</span>
+                                <span>${data.stornoTVA.toFixed(2)} RON</span>
+                            </div>
+                            <div class="total-line final">
+                                <span>TOTAL STORNO:</span>
+                                <span>${data.stornoTotal.toFixed(2)} RON</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${data.notes ? `
+                <div class="storno-notes">
+                    <div class="info-title">Observații Suplimentare:</div>
+                    <p>${data.notes}</p>
+                </div>
+                ` : ''}
+
+                <div class="storno-footer-print">
+                    <p><strong>ATENȚIE:</strong> Această factură storno anulează complet factura originală ${data.originalInvoiceNumber}</p>
+                    <p>Factură storno generată electronic de SmartBill la data de ${formatDate(data.stornoDate)}</p>
+                </div>
+            `;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ro-RO');
+        }
+
+        function printStornoInvoice() {
+            window.print();
+        }
+
+		function sendStornoInvoiceEmail() {
+			const emailTo = document.getElementById('stornoEmailTo').value;
+			const emailCC = document.getElementById('stornoEmailCC').value;
+			const emailSubject = document.getElementById('stornoEmailSubject').value;
+			const emailMessage = document.getElementById('stornoEmailMessage').value;
+			const attachPDF = document.getElementById('stornoAttachPDF').checked;
+
+			if (!emailTo) {
+				toastr.error('Vă rugăm să introduceți adresa de email a destinatarului');
+				return;
+			}
+
+			// Dezactivează butonul pentru a preveni trimiteri multiple
+			const emailBtn = document.getElementById('stornoEmailBtn');
+			const originalText = emailBtn.innerHTML;
+			emailBtn.disabled = true;
+			emailBtn.innerHTML = '📧 Se trimite...';
+
+			// Pregătire date pentru trimiterea email-ului
+			const emailData = {
+				email_to: emailTo,
+				email_cc: emailCC,
+				email_subject: emailSubject,
+				email_message: emailMessage,
+				attach_pdf: attachPDF,
+				original_invoice: currentStornoData.originalInvoiceNumber,
+				client_name: currentStornoData.client.Nume,
+				client_cif: currentStornoData.client.CIF,
+				client_email: currentStornoData.client.Client_Email,
+				storno_date: currentStornoData.stornoDate,
+				reason: currentStornoData.stornoReason,
+				notes: currentStornoData.notes,
+				original_subtotal: currentStornoData.originalSubtotal,
+				original_tva: currentStornoData.originalTVA,
+				original_total: currentStornoData.originalTotal
+			};
+
+			console.log('Trimit email storno cu datele:', emailData);
+			
+			fetch('/api/send_storno_email', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(emailData)
+			})
+			.then(response => {
+				console.log('Răspuns email storno:', response.status);
+				return response.json();
+			})
+			.then(data => {
+				emailBtn.disabled = false;
+				emailBtn.innerHTML = originalText;
+				
+				if (data.success) {
+					toastr.success(data.message || 'Email storno trimis cu succes!');
+					
+					setTimeout(() => {
+						closeStornoPreviewModal();
+						
+						// Reload storno invoices list
+						loadStornoInvoices();
+						
+						// Reset form
+						resetStornoForm();
+						
+						// Redirect to dashboard
+						setTimeout(() => {
+							window.location.href = '/dashboard';
+						}, 1500);
+					}, 2000);
+				} else {
+					toastr.error(data.message || 'Eroare la trimiterea email-ului storno');
+				}
+			})
+			.catch(error => {
+				console.error('Eroare la trimiterea email-ului storno:', error);
+				toastr.error('Eroare la trimiterea email-ului storno: ' + error.message);
+				emailBtn.disabled = false;
+				emailBtn.innerHTML = originalText;
+			});
+		}
+
+        async function saveStornoInvoice(stornoData) {
+            try {
+                toastr.info('💾 Se salvează factura storno...');
+                
+                const response = await fetch('/api/save_factura_storno', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(stornoData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    toastr.success('✅ Factura storno a fost emisă cu succes!');
+                    
+                    // Resetează formularul după salvare
+                    setTimeout(() => {
+                        resetStornoForm();
+                        // Reîncarcă lista de storno
+                        loadStornoInvoices();
+                    }, 2000);
+                    
+                } else {
+                    throw new Error(result.message || 'Eroare la salvarea storno-ului');
+                }
+                
+            } catch (error) {
+                console.error('❌ Eroare la salvarea storno-ului:', error);
+                toastr.error('❌ Eroare la salvarea storno-ului: ' + error.message);
+            }
+        }
+
+        function saveStornoToDatabase() {
+            const stornoData = {
+                original_invoice_number: currentStornoData.originalInvoiceNumber,
+                storno_date: currentStornoData.stornoDate,
+                storno_reason: currentStornoData.stornoReason,
+                client_id: currentStornoData.client.ID,
+                client_name: currentStornoData.client.Nume,
+                client_cif: currentStornoData.client.CIF,
+                client_email: currentStornoData.client.Client_Email,
+                original_subtotal: currentStornoData.originalSubtotal,
+                original_tva: currentStornoData.originalTVA,
+                original_total: currentStornoData.originalTotal,
+                storno_subtotal: -currentStornoData.originalSubtotal,
+                storno_tva: -currentStornoData.originalTVA,
+                storno_total: -currentStornoData.originalTotal,
+                storno_notes: currentStornoData.notes
+            };
+
+            console.log('📊 Date storno pentru trimitere:', stornoData);
+            
+            // Aici poți adăuga apelul către backend pentru salvarea storno-ului
+            return saveStornoInvoice(stornoData);
+        }
+
+        // Funcție pentru căutarea facturii originale - CORECTATĂ
+        async function searchOriginalInvoice() {
+            console.log('🚀 === FUNCȚIA searchOriginalInvoice() A FOST APELATĂ ===');
+            const invoiceNumber = document.getElementById('originalInvoiceNumber').value.trim();
+            console.log('📝 Numărul facturii introdus:', invoiceNumber);
+            
+            if (!invoiceNumber) {
+                toastr.warning('⚠️ Introduceți numărul facturii originale');
+                return;
+            }
+            
+            console.log('🔍 Caut factura originală:', invoiceNumber);
+            
+            // Show loading indicator
+            const searchBtn = document.querySelector('button[onclick="searchOriginalInvoice()"]');
+            const originalText = searchBtn.innerHTML;
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '⏳ Caută...';
+            
+            toastr.info(`🔍 Caut factura ${invoiceNumber}...`);
+            
+            console.log('📡 Pregătesc să trimit request la API...');
+            
+            try {
+                console.log('📡 Trimit request la /api/search_facturi...');
+                const response = await fetch('/api/search_facturi', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        invoice_number: invoiceNumber
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                console.log('📄 Status răspuns:', response.status, response.statusText);
+                const result = await response.json();
+                console.log('📄 Rezultat căutare factură:', result);
+                console.log('📄 Success:', result.success);
+                console.log('📄 Data length:', result.data ? result.data.length : 'undefined');
+                
+                if (result.success && result.data.length > 0) {
+                    const invoice = result.data[0];
+                    console.log('📋 Factură găsită:', invoice);
+                    
+                    // 1. COMPLETEAZĂ VALORILE FINANCIARE
+                    document.getElementById('originalSubtotal').value = parseFloat(invoice.subtotal || 0).toFixed(2);
+                    document.getElementById('originalTVA').value = parseFloat(invoice.tva || 0).toFixed(2);
+                    document.getElementById('originalTotal').value = parseFloat(invoice.total || 0).toFixed(2);
+                    
+                    // 2. GĂSEȘTE ȘI SELECTEAZĂ CLIENTUL AUTOMAT
+                    const clientCIF = invoice.client_cif;
+                    const clientName = invoice.client_nume;
+                    
+                    console.log('👤 Caut clientul:', { cif: clientCIF, nume: clientName });
+                    
+                    const clientSelect = document.getElementById('clientSelect');
+                    let clientFound = false;
+                    
+                    // Caută după CIF mai întâi (mai sigur)
+                    for (let option of clientSelect.options) {
+                        if (option.textContent.includes(clientCIF)) {
+                            clientSelect.value = option.value;
+                            clientFound = true;
+                            console.log('✅ Client găsit după CIF:', option.textContent);
+                            break;
+                        }
+                    }
+                    
+                    // Dacă nu găsește după CIF, încearcă după nume
+                    if (!clientFound) {
+                        for (let option of clientSelect.options) {
+                            if (option.textContent.includes(clientName)) {
+                                clientSelect.value = option.value;
+                                clientFound = true;
+                                console.log('✅ Client găsit după nume:', option.textContent);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 3. DECLANȘEAZĂ ACTUALIZAREA CÂMPURILOR CLIENT
+                    if (clientFound) {
+                        clientSelect.dispatchEvent(new Event('change'));
+                        console.log('🔄 Actualizare câmpuri client declanșată');
+                    } else {
+                        console.warn('⚠️ Clientul nu a fost găsit în combo');
+                        // Completează manual câmpurile client din datele facturii
+                        document.getElementById('clientName').value = clientName || '';
+                        document.getElementById('clientCIF').value = clientCIF || '';
+                        document.getElementById('clientEmail').value = invoice.client_email || '';
+                    }
+                    
+                    // 4. CALCULEAZĂ VALORILE STORNO
+                    calculateStornoValues();
+                    
+                    toastr.success(`✅ Factura ${invoiceNumber} găsită și toate datele încărcate!`);
+                    
+                } else {
+                    toastr.error(`❌ Factura ${invoiceNumber} nu a fost găsită în baza de date`);
+                    console.log('❌ Nu s-au găsit rezultate pentru:', invoiceNumber);
+                }
+                
+            } catch (error) {
+                console.error('❌ EROARE DETALIATĂ la căutarea facturii:', error);
+                console.error('❌ Tipul erorii:', typeof error);
+                console.error('❌ Stack trace:', error.stack);
+                toastr.error('❌ Eroare la căutarea facturii: ' + error.message);
+            } finally {
+                // Restore button state
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = originalText;
+            }
+        }
+
+        function resetStornoForm() {
+            console.log('🔄 Resetez formularul de storno');
+            
+            document.getElementById('stornoForm').reset();
+            
+            // Resetează valorile afișate
+            document.getElementById('displayOriginalSubtotal').textContent = '0.00 RON';
+            document.getElementById('displayOriginalTVA').textContent = '0.00 RON';
+            document.getElementById('displayOriginalTotal').textContent = '0.00 RON';
+            document.getElementById('displayStornoSubtotal').textContent = '0.00 RON';
+            document.getElementById('displayStornoTVA').textContent = '0.00 RON';
+            document.getElementById('displayStornoTotal').textContent = '0.00 RON';
+            
+            // Setează data curentă
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('stornoDate').value = today;
+            
+            toastr.info('✅ Formularul a fost resetat');
+        }
+
+        // Modalul se închide doar prin butoanele "Anulează" sau "Salvează"
+        // Eliminat închiderea la click în afara modalului pentru o experiență mai bună
+    </script>
+</body>
+</html>

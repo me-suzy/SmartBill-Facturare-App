@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Simplu</title>
+</head>
+<body>
+    <h1>Test JavaScript și API</h1>
+    
+    <div id="test-results"></div>
+    
+    <script>
+        console.log('=== TEST SIMPLU ÎNCEPUT ===');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            
+            // Test 1: Verifică dacă JavaScript-ul funcționează
+            document.getElementById('test-results').innerHTML = '<p>JavaScript funcționează!</p>';
+            
+            // Test 2: Verifică API-ul
+            fetch('/api/get_clienti')
+                .then(response => {
+                    console.log('API Response:', response);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API Data:', data);
+                    document.getElementById('test-results').innerHTML += 
+                        `<p>API funcționează! Număr clienți: ${data.length}</p>
+                         <p>Primul client: ${data[0].Nume}</p>`;
+                })
+                .catch(error => {
+                    console.error('API Error:', error);
+                    document.getElementById('test-results').innerHTML += 
+                        `<p style="color: red;">API Error: ${error.message}</p>`;
+                });
+        });
+    </script>
+</body>
+</html> 

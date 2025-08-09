@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBill - Rapoarte</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <style>
+        .reports-container {
+            padding: 30px;
+        }
+        
+        .reports-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .reports-title {
+            font-size: 24px;
+            color: var(--dark);
+            font-weight: 300;
+        }
+        
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .report-card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            border-top: 4px solid var(--primary);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .report-card.vanzari { border-top-color: var(--success); }
+        .report-card.clienti { border-top-color: var(--warning); }
+        .report-card.produse { border-top-color: var(--primary); }
+        .report-card.tva { border-top-color: var(--danger); }
+        
+        .report-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+        
+        .report-title {
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .report-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        
+        .report-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+            width: 100%;
+        }
+        
+        .report-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .filters-section {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .filters-title {
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: end;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-label {
+            font-size: 14px;
+            color: var(--dark);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .filter-input {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+        }
+        
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .apply-filters-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .apply-filters-btn:hover {
+            background: #229954;
+        }
+        
+        .report-content {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-top: 30px;
+        }
+        
+        .report-content h3 {
+            font-size: 20px;
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .report-table th {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+        }
+        
+        .report-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .report-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .report-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .summary-card {
+            background: var(--light);
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        
+        .summary-value {
+            font-size: 28px;
+            font-weight: 300;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+        
+        .summary-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .export-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+        
+        .export-btn {
+            background: var(--warning);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .export-btn:hover {
+            background: #e67e22;
+        }
+        
+        .export-btn.pdf {
+            background: var(--danger);
+        }
+        
+        .export-btn.pdf:hover {
+            background: #c0392b;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .no-data-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h2>💰 SmartBill</h2>
+                <span>FACTURARE</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item">📊 Dashboard</a>
+                <div class="nav-group">
+                    <span class="nav-title">📄 Emitere</span>
+                    <a href="/factura" class="nav-subitem">Factură</a>
+                    <a href="/bon-fiscal" class="nav-subitem">Bon Fiscal</a>
+                    <a href="/factura-storno" class="nav-subitem">Factură Storno</a>
+                </div>
+                <a href="/rapoarte" class="nav-item active">📈 Rapoarte</a>
+                <a href="/configurare" class="nav-item">⚙️ Configurare</a>
+                <div class="nav-group">
+                    <span class="nav-title">📝 Nomenclatoare</span>
+                    <a href="/produse" class="nav-subitem">Produse</a>
+                    <a href="/clienti" class="nav-subitem">Clienți</a>
+                </div>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <header>
+                <h1>Rapoarte</h1>
+                <div class="user-info">
+                    <span>TIP B. SRL</span>
+                </div>
+            </header>
+
+            <div class="reports-container">
+                <div class="reports-header">
+                    <h2 class="reports-title">Rapoarte și Analize</h2>
+                </div>
+
+                <!-- Filtre -->
+                <div class="filters-section">
+                    <h3 class="filters-title">Filtre Raport</h3>
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Data de început</label>
+                            <input type="date" class="filter-input" id="startDate" value="{{ last_month_start }}">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Data de sfârșit</label>
+                            <input type="date" class="filter-input" id="endDate">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Tip Raport</label>
+                            <select class="filter-input" id="reportType">
+                                <option value="vanzari">Raport Vânzări</option>
+                                <option value="clienti">Raport Clienți</option>
+                                <option value="produse">Raport Produse</option>
+                                <option value="tva">Raport TVA</option>
+                            </select>
+                        </div>
+                        <button class="apply-filters-btn" onclick="generateReport()">
+                            Generează Raport
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tipuri de Rapoarte -->
+                <div class="reports-grid">
+                    <div class="report-card vanzari" onclick="selectReport('vanzari')">
+                        <div class="report-icon">📊</div>
+                        <h3 class="report-title">Raport Vânzări</h3>
+                        <p class="report-description">
+                            Analizează vânzările pe perioade, facturi și bonuri fiscale emise, 
+                            cu detalii despre încasări și restanțe.
+                        </p>
+                        <button class="report-btn">Generează Raport</button>
+                    </div>
+
+                    <div class="report-card clienti" onclick="selectReport('clienti')">
+                        <div class="report-icon">👥</div>
+                        <h3 class="report-title">Raport Clienți</h3>
+                        <p class="report-description">
+                            Vezi topul clienților după vânzări, solduri curente și istoricul 
+                            tranzacțiilor pentru fiecare client.
+                        </p>
+                        <button class="report-btn">Generează Raport</button>
+                    </div>
+
+                    <div class="report-card produse" onclick="selectReport('produse')">
+                        <div class="report-icon">📦</div>
+                        <h3 class="report-title">Raport Produse</h3>
+                        <p class="report-description">
+                            Analizează performanța produselor, stocuri, vânzări și 
+                            profitabilitatea pentru fiecare produs.
+                        </p>
+                        <button class="report-btn">Generează Raport</button>
+                    </div>
+
+                    <div class="report-card tva" onclick="selectReport('tva')">
+                        <div class="report-icon">💰</div>
+                        <h3 class="report-title">Raport TVA</h3>
+                        <p class="report-description">
+                            Calculează TVA-ul colectat și deductibil, cu detalii pe perioade 
+                            pentru declarațiile fiscale.
+                        </p>
+                        <button class="report-btn">Generează Raport</button>
+                    </div>
+                </div>
+
+                <!-- Conținut Raport -->
+                <div class="report-content" id="reportContent" style="display: none;">
+                    <h3 id="reportTitle">Raport Vânzări</h3>
+                    
+                    <div id="reportLoading" class="loading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p>Se generează raportul...</p>
+                    </div>
+                    
+                    <div id="reportData" style="display: none;">
+                        <div class="report-summary" id="reportSummary">
+                            <!-- Sumarele vor fi adăugate dinamic -->
+                        </div>
+                        
+                        <div class="report-table-container">
+                            <table class="report-table" id="reportTable">
+                                <!-- Datele tabelului vor fi adăugate dinamic -->
+                            </table>
+                        </div>
+                        
+                        <div class="export-section">
+                            <div class="export-buttons">
+                                <button class="export-btn" onclick="exportToExcel()">
+                                    📊 Export Excel
+                                </button>
+                                <button class="export-btn pdf" onclick="exportToPDF()">
+                                    📄 Export PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="reportNoData" class="no-data" style="display: none;">
+                        <div class="no-data-icon">📊</div>
+                        <h4>Nu există date pentru perioada selectată</h4>
+                        <p>Încearcă să modifici filtrele sau să selectezi o altă perioadă.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        let currentReport = 'vanzari';
+        let reportData = null;
+
+        // Setează data de sfârșit la ziua de azi
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        });
+
+        function selectReport(reportType) {
+            currentReport = reportType;
+            document.getElementById('reportType').value = reportType;
+            
+            // Actualizează stilurile cardurilor
+            document.querySelectorAll('.report-card').forEach(card => {
+                card.style.borderTopColor = 'var(--primary)';
+            });
+            
+            const selectedCard = document.querySelector(`.report-card.${reportType}`);
+            if (selectedCard) {
+                selectedCard.style.borderTopColor = 'var(--success)';
+            }
+            
+            generateReport();
+        }
+
+        function generateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const reportType = document.getElementById('reportType').value;
+            
+            if (!startDate || !endDate) {
+                toastr.error('Te rog selectează perioada pentru raport');
+                return;
+            }
+            
+            showReportLoading();
+            
+            // Simulează generarea raportului
+            setTimeout(() => {
+                generateReportData(reportType, startDate, endDate);
+            }, 1000);
+        }
+
+        function showReportLoading() {
+            document.getElementById('reportContent').style.display = 'block';
+            document.getElementById('reportLoading').style.display = 'block';
+            document.getElementById('reportData').style.display = 'none';
+            document.getElementById('reportNoData').style.display = 'none';
+        }
+
+        function generateReportData(reportType, startDate, endDate) {
+            document.getElementById('reportLoading').style.display = 'none';
+            
+            switch (reportType) {
+                case 'vanzari':
+                    generateSalesReport(startDate, endDate);
+                    break;
+                case 'clienti':
+                    generateClientsReport(startDate, endDate);
+                    break;
+                case 'produse':
+                    generateProductsReport(startDate, endDate);
+                    break;
+                case 'tva':
+                    generateTVAReport(startDate, endDate);
+                    break;
+            }
+        }
+
+        function generateSalesReport(startDate, endDate) {
+            document.getElementById('reportTitle').textContent = `Raport Vânzări (${startDate} - ${endDate})`;
+            
+            // Simulează date pentru raportul de vânzări
+            const summaryData = {
+                totalVanzari: 15789.50,
+                totalFacturi: 15,
+                totalBonuri: 8,
+                incasari: 12345.20
+            };
+            
+            const tableData = [
+                { data: '2024-01-15', tip: 'Factură', numar: 'FACT-001', client: 'SC DEMO SRL', suma: 1785.00, status: 'Plătită' },
+                { data: '2024-01-16', tip: 'Bon Fiscal', numar: 'BF-001', client: 'Popescu Ion', suma: 178.50, status: 'Plătit' },
+                { data: '2024-01-17', tip: 'Factură', numar: 'FACT-002', client: 'SC TEST IMPEX', suma: 3332.60, status: 'Neplătită' },
+                { data: '2024-01-18', tip: 'Bon Fiscal', numar: 'BF-002', client: 'Ionescu Maria', suma: 333.80, status: 'Plătit' },
+                { data: '2024-01-19', tip: 'Factură', numar: 'FACT-003', client: 'Popescu Ion', suma: 1428.00, status: 'Plătită' }
+            ];
+            
+            displayReport(summaryData, tableData, 'vanzari');
+        }
+
+        function generateClientsReport(startDate, endDate) {
+            document.getElementById('reportTitle').textContent = `Raport Clienți (${startDate} - ${endDate})`;
+            
+            const summaryData = {
+                totalClienti: 10,
+                clientiActivi: 8,
+                soldTotal: 7497.60,
+                clientiCuDatorii: 3
+            };
+            
+            const tableData = [
+                { client: 'SC DEMO SRL', vanzari: 1785.00, facturi: 2, sold: 0.00, status: 'Activ' },
+                { client: 'SC TEST IMPEX', vanzari: 3332.60, facturi: 1, sold: 3332.60, status: 'Activ' },
+                { client: 'Popescu Ion', vanzari: 1428.00, facturi: 1, sold: 0.00, status: 'Activ' },
+                { client: 'SC ALPHA BETA', vanzari: 4165.00, facturi: 1, sold: 4165.00, status: 'Activ' },
+                { client: 'Ionescu Maria', vanzari: 1059.10, facturi: 1, sold: 0.00, status: 'Activ' }
+            ];
+            
+            displayReport(summaryData, tableData, 'clienti');
+        }
+
+        function generateProductsReport(startDate, endDate) {
+            document.getElementById('reportTitle').textContent = `Raport Produse (${startDate} - ${endDate})`;
+            
+            const summaryData = {
+                totalProduse: 10,
+                produseVandute: 8,
+                valoareStoc: 45678.90,
+                produseStocScazut: 2
+            };
+            
+            const tableData = [
+                { produs: 'Consultanță IT', vanzari: 1500.00, cantitate: 10, stoc: 999, categorie: 'Servicii IT' },
+                { produs: 'Laptop Dell Inspiron', vanzari: 3500.00, cantitate: 1, stoc: 4, categorie: 'Hardware' },
+                { produs: 'Monitor Samsung 24"', vanzari: 1200.00, cantitate: 1, stoc: 7, categorie: 'Hardware' },
+                { produs: 'Licență Office 365', vanzari: 650.00, cantitate: 1, stoc: 999, categorie: 'Software' },
+                { produs: 'Hârtie A4 80g', vanzari: 175.00, cantitate: 5, stoc: 45, categorie: 'Consumabile' }
+            ];
+            
+            displayReport(summaryData, tableData, 'produse');
+        }
+
+        function generateTVAReport(startDate, endDate) {
+            document.getElementById('reportTitle').textContent = `Raport TVA (${startDate} - ${endDate})`;
+            
+            const summaryData = {
+                tvaColectat: 2998.01,
+                tvaDeductibil: 893.76,
+                tvaDePlatit: 2104.25,
+                tranzactii: 23
+            };
+            
+            const tableData = [
+                { data: '2024-01-15', tip: 'Factură', numar: 'FACT-001', tvaColectat: 285.00, tvaDeductibil: 0.00 },
+                { data: '2024-01-16', tip: 'Bon Fiscal', numar: 'BF-001', tvaColectat: 28.50, tvaDeductibil: 0.00 },
+                { data: '2024-01-17', tip: 'Factură', numar: 'FACT-002', tvaColectat: 532.10, tvaDeductibil: 0.00 },
+                { data: '2024-01-18', tip: 'Bon Fiscal', numar: 'BF-002', tvaColectat: 53.30, tvaDeductibil: 0.00 },
+                { data: '2024-01-19', tip: 'Factură', numar: 'FACT-003', tvaColectat: 228.00, tvaDeductibil: 0.00 }
+            ];
+            
+            displayReport(summaryData, tableData, 'tva');
+        }
+
+        function displayReport(summaryData, tableData, reportType) {
+            document.getElementById('reportData').style.display = 'block';
+            
+            // Afișează sumarele
+            const summaryContainer = document.getElementById('reportSummary');
+            summaryContainer.innerHTML = '';
+            
+            Object.entries(summaryData).forEach(([key, value]) => {
+                const summaryCard = document.createElement('div');
+                summaryCard.className = 'summary-card';
+                summaryCard.innerHTML = `
+                    <div class="summary-value">${typeof value === 'number' ? value.toLocaleString('ro-RO') : value}</div>
+                    <div class="summary-label">${getSummaryLabel(key)}</div>
+                `;
+                summaryContainer.appendChild(summaryCard);
+            });
+            
+            // Afișează tabelul
+            const table = document.getElementById('reportTable');
+            table.innerHTML = '';
+            
+            // Adaugă header-ul tabelului
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            const headers = getTableHeaders(reportType);
+            
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Adaugă datele
+            const tbody = document.createElement('tbody');
+            tableData.forEach(row => {
+                const tr = document.createElement('tr');
+                Object.values(row).forEach(value => {
+                    const td = document.createElement('td');
+                    td.textContent = typeof value === 'number' ? value.toLocaleString('ro-RO') : value;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            table.appendChild(tbody);
+        }
+
+        function getSummaryLabel(key) {
+            const labels = {
+                totalVanzari: 'Total Vânzări (RON)',
+                totalFacturi: 'Total Facturi',
+                totalBonuri: 'Total Bonuri',
+                incasari: 'Încasări (RON)',
+                totalClienti: 'Total Clienți',
+                clientiActivi: 'Clienți Activi',
+                soldTotal: 'Sold Total (RON)',
+                clientiCuDatorii: 'Clienți cu Datorii',
+                totalProduse: 'Total Produse',
+                produseVandute: 'Produse Vândute',
+                valoareStoc: 'Valoare Stoc (RON)',
+                produseStocScazut: 'Stoc Scăzut',
+                tvaColectat: 'TVA Colectat (RON)',
+                tvaDeductibil: 'TVA Deductibil (RON)',
+                tvaDePlatit: 'TVA de Platit (RON)',
+                tranzactii: 'Tranzacții'
+            };
+            return labels[key] || key;
+        }
+
+        function getTableHeaders(reportType) {
+            const headers = {
+                vanzari: ['Data', 'Tip', 'Număr', 'Client', 'Suma (RON)', 'Status'],
+                clienti: ['Client', 'Vânzări (RON)', 'Facturi', 'Sold (RON)', 'Status'],
+                produse: ['Produs', 'Vânzări (RON)', 'Cantitate', 'Stoc', 'Categorie'],
+                tva: ['Data', 'Tip', 'Număr', 'TVA Colectat (RON)', 'TVA Deductibil (RON)']
+            };
+            return headers[reportType] || [];
+        }
+
+        function exportToExcel() {
+            toastr.info('Funcția de export Excel va fi implementată în versiunea finală');
+        }
+
+        function exportToPDF() {
+            toastr.info('Funcția de export PDF va fi implementată în versiunea finală');
+        }
+
+        // Initialize toastr
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000",
+            "extendedTimeOut": "2000"
+        };
+
+        // Generează raportul la încărcarea paginii
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                generateReport();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,472 @@
+Îți înțeleg preocuparea. Problema este că cifrele din tabelul "Lista Clienți" din `clienti.html` sunt prea apropiate de butoanele de editare (`✏️`) și ștergere (`🗑️`), ceea ce poate afecta usability-ul. Pentru a rezolva acest lucru, putem adăuga spațiere suplimentară între coloana "Sold (RON)" și coloana "Acțiuni" prin ajustarea stilurilor CSS.
+
+### Soluție
+Trebuie să modificăm CSS-ul pentru a adăuga padding sau margini în tabel, în special între coloana "Sold (RON)" și butoane. De asemenea, putem ajusta dimensiunea și poziționarea butoanelor pentru a le face mai distincte.
+
+#### Pași
+1. **Adaugă spațiere în tabel**: Folosește `padding-right` în celulele din coloana "Sold (RON)" și ajustează lățimea coloanei "Acțiuni".
+2. **Stilizează butoanele**: Adaugă margini sau padding la butoane pentru a le separa mai bine de text.
+3. **Actualizează `clienti.html` și `style.css` în consecință**.
+
+---
+
+### Implementare
+
+#### 1. Actualizează `style.css`
+Adaugă sau modifică stilurile pentru tabel și butoane.
+
+```css
+/* Existing styles remain unchanged... */
+
+/* Table styles */
+.client-list table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.client-list th, .client-list td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.client-list th:last-child, .client-list td:last-child {
+    padding-right: 20px; /* Mai mult spațiu pentru coloana Acțiuni */
+}
+
+.client-list td[data-stat="sold"] {
+    padding-right: 30px; /* Spațiere suplimentară între Sold și Acțiuni */
+}
+
+/* Action buttons */
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    margin: 0 5px; /* Spațiere între butoane */
+    padding: 2px 6px; /* Dimensiune mai clară pentru butoane */
+}
+
+.action-btn:hover {
+    color: #007bff;
+}
+
+/* Modal styles (unchanged, already provided earlier) */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Rest of the modal styles remain unchanged... */
+```
+
+**Explicație**:
+- `.client-list td[data-stat="sold"]`: Adaugă `padding-right: 30px` pentru a crea spațiu între "Sold (RON)" și butoane.
+- `.client-list th:last-child, .client-list td:last-child`: Crește `padding-right` pentru coloana "Acțiuni".
+- `.action-btn`: Adaugă `margin` și `padding` pentru a separa butoanele și a le face mai vizibile.
+
+#### 2. Actualizează `clienti.html`
+Modifică tabelul pentru a folosi atributul `data-stat="sold"` pe coloana "Sold (RON)" și asigură-te că butoanele sunt corect stilizate.
+
+```html
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBill - Clienți</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>💰 SmartBill</h2>
+                <p>FACTURARE</p>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/dashboard">📊 Dashboard</a></li>
+                    <li>
+                        <a href="#">📄 Emitere</a>
+                        <ul>
+                            <li><a href="/factura">Factură</a></li>
+                            <li><a href="/bon-fiscal">Bon Fiscal</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/rapoarte">📈 Rapoarte</a></li>
+                    <li>
+                        <a href="#">⚙️ Configurare</a>
+                        <ul>
+                            <li><a href="#">📝 Nomenclatoare</a></li>
+                            <li><a href="/produse">Produse</a></li>
+                            <li><a href="/clienti">Clienți</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Clienți</h1>
+                <p>TIP B. SRL</p>
+            </header>
+            <section class="stats">
+                <div class="stat-card" data-stat="total_clienti">
+                    <span class="stat-value">0</span>
+                    <p>Total Clienți</p>
+                </div>
+                <div class="stat-card" data-stat="clienti_activi">
+                    <span class="stat-value">0</span>
+                    <p>Clienți Activi</p>
+                </div>
+                <div class="stat-card" data-stat="sold_total">
+                    <span class="stat-value">0</span>
+                    <p>Sold Total (RON)</p>
+                </div>
+                <div class="stat-card" data-stat="clienti_datorii">
+                    <span class="stat-value">0</span>
+                    <p>Clienți cu Datorii</p>
+                </div>
+            </section>
+            <section class="client-list">
+                <h2>Lista Clienți</h2>
+                <button class="add-client-btn" onclick="openAddClientModal()">➕ Adaugă Client</button>
+                <table id="clientiTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>CIF</th>
+                            <th>Nume</th>
+                            <th>Email</th>
+                            <th>Telefon</th>
+                            <th>Localitate</th>
+                            <th>Sold (RON)</th>
+                            <th>Acțiuni</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add/Edit Client Modal -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Adaugă Client Nou</h3>
+                <span class="close" onclick="closeModal()">×</span>
+            </div>
+            <form id="clientForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">CIF/CNP</label>
+                        <input type="text" class="form-input" id="clientCIF" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nume Client</label>
+                        <input type="text" class="form-input" id="clientName" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="clientEmail">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telefon</label>
+                        <input type="tel" class="form-input" id="clientPhone">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Localitate</label>
+                        <input type="text" class="form-input" id="clientCity">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Județ</label>
+                        <select class="form-input" id="clientCounty">
+                            <option value="">Selectează Județul</option>
+                            <option value="Alba">Alba</option>
+                            <option value="Arad">Arad</option>
+                            <option value="Argeș">Argeș</option>
+                            <option value="Bacău">Bacău</option>
+                            <option value="Bihor">Bihor</option>
+                            <option value="Bistrița-Năsăud">Bistrița-Năsăud</option>
+                            <option value="Botoșani">Botoșani</option>
+                            <option value="Brașov">Brașov</option>
+                            <option value="Brăila">Brăila</option>
+                            <option value="București">București</option>
+                            <option value="Buzău">Buzău</option>
+                            <option value="Călărași">Călărași</option>
+                            <option value="Caraș-Severin">Caraș-Severin</option>
+                            <option value="Cluj">Cluj</option>
+                            <option value="Constanța">Constanța</option>
+                            <option value="Covasna">Covasna</option>
+                            <option value="Dâmbovița">Dâmbovița</option>
+                            <option value="Dolj">Dolj</option>
+                            <option value="Galați">Galați</option>
+                            <option value="Giurgiu">Giurgiu</option>
+                            <option value="Gorj">Gorj</option>
+                            <option value="Harghita">Harghita</option>
+                            <option value="Hunedoara">Hunedoara</option>
+                            <option value="Ialomița">Ialomița</option>
+                            <option value="Iași">Iași</option>
+                            <option value="Ilfov">Ilfov</option>
+                            <option value="Maramureș">Maramureș</option>
+                            <option value="Mehedinți">Mehedinți</option>
+                            <option value="Mureș">Mureș</option>
+                            <option value="Neamț">Neamț</option>
+                            <option value="Olt">Olt</option>
+                            <option value="Prahova">Prahova</option>
+                            <option value="Sălaj">Sălaj</option>
+                            <option value="Satu Mare">Satu Mare</option>
+                            <option value="Sibiu">Sibiu</option>
+                            <option value="Suceava">Suceava</option>
+                            <option value="Teleorman">Teleorman</option>
+                            <option value="Timiș">Timiș</option>
+                            <option value="Tulcea">Tulcea</option>
+                            <option value="Vâlcea">Vâlcea</option>
+                            <option value="Vaslui">Vaslui</option>
+                            <option value="Vrancea">Vrancea</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Adresa Completă</label>
+                    <input type="text" class="form-input" id="clientAddress">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Cod Postal</label>
+                        <input type="text" class="form-input" id="clientPostalCode">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Website</label>
+                        <input type="url" class="form-input" id="clientWebsite">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Persoană de Contact</label>
+                    <input type="text" class="form-input" id="clientContactPerson">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observații</label>
+                    <textarea class="form-input" id="clientNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Anulează</button>
+                    <button type="submit" class="btn-primary">Salvează Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/clienti.js"></script>
+</body>
+</html>
+```
+
+**Modificări**:
+- Adăugat atributul `data-stat="sold"` pe `<td>` pentru coloana "Sold (RON)" în template-ul din JavaScript (din `clienti.js`, vezi mai jos).
+- Asigurat că tabelul folosește clasele definite în CSS.
+
+#### 3. Actualizează `clienti.js`
+Modifică JavaScript-ul pentru a adăuga atributul `data-stat="sold"` la generarea rândurilor tabelului.
+
+```javascript
+document.addEventListener('DOMContentLoaded', function() {
+    const clientiTable = document.querySelector('#clientiTable tbody');
+    const totalClienti = document.querySelector('[data-stat="total_clienti"] .stat-value');
+    const clientiActivi = document.querySelector('[data-stat="clienti_activi"] .stat-value');
+    const soldTotal = document.querySelector('[data-stat="sold_total"] .stat-value');
+    const clientiDatorii = document.querySelector('[data-stat="clienti_datorii"] .stat-value');
+    const clientModal = document.getElementById('clientModal');
+    const clientForm = document.getElementById('clientForm');
+    const modalTitle = document.getElementById('modalTitle');
+
+    // Load clients
+    function loadClienti() {
+        fetch('/api/get_clienti')
+            .then(response => response.json())
+            .then(clienti => {
+                clientiTable.innerHTML = '';
+                clienti.forEach(client => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${client.ID}</td>
+                        <td>${client.CIF || ''}</td>
+                        <td>${client.Nume || ''}</td>
+                        <td>${client.Email || ''}</td>
+                        <td>${client.Telefon || ''}</td>
+                        <td>${client.Localitate || ''}</td>
+                        <td data-stat="sold">${(client.Sold_Curent || 0).toFixed(2)}</td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick="editClient(${client.ID})">✏️</button>
+                            <button class="action-btn delete-btn" onclick="deleteClient(${client.ID})">🗑️</button>
+                        </td>
+                    `;
+                    clientiTable.appendChild(row);
+                });
+
+                // Update statistics
+                totalClienti.textContent = clienti.length;
+                clientiActivi.textContent = clienti.filter(c => c.Status === 'Activ').length;
+                soldTotal.textContent = clienti.reduce((sum, c) => sum + (c.Sold_Curent || 0), 0).toFixed(2);
+                clientiDatorii.textContent = clienti.filter(c => (c.Sold_Curent || 0) > 0).length;
+            })
+            .catch(error => {
+                console.error('Eroare la încărcarea clienților:', error);
+                alert('Nu s-au putut încărca clienții: ' + error.message);
+            });
+    }
+
+    // Open add client modal
+    window.openAddClientModal = function() {
+        modalTitle.textContent = 'Adaugă Client Nou';
+        clientForm.reset();
+        clientForm.dataset.clientId = '';
+        clientModal.style.display = 'flex';
+    };
+
+    // Open edit client modal
+    window.editClient = function(clientId) {
+        fetch(`/api/get_clienti`)
+            .then(response => response.json())
+            .then(clienti => {
+                const client = clienti.find(c => c.ID === clientId);
+                if (client) {
+                    modalTitle.textContent = 'Editează Client';
+                    document.getElementById('clientCIF').value = client.CIF || '';
+                    document.getElementById('clientName').value = client.Nume || '';
+                    document.getElementById('clientEmail').value = client.Email || '';
+                    document.getElementById('clientPhone').value = client.Telefon || '';
+                    document.getElementById('clientCity').value = client.Localitate || '';
+                    document.getElementById('clientCounty').value = client.Judet || '';
+                    document.getElementById('clientAddress').value = client.Adresa || '';
+                    document.getElementById('clientPostalCode').value = client.Cod_Postal || '';
+                    document.getElementById('clientWebsite').value = client.Website || '';
+                    document.getElementById('clientContactPerson').value = client.Persoana_Contact || '';
+                    document.getElementById('clientNotes').value = client.Observatii || '';
+                    clientForm.dataset.clientId = clientId;
+                    clientModal.style.display = 'flex';
+                }
+            })
+            .catch(error => {
+                console.error('Eroare:', error);
+                alert('Eroare la încărcarea datelor clientului!');
+            });
+    };
+
+    // Close modal
+    window.closeModal = function() {
+        clientModal.style.display = 'none';
+        clientForm.reset();
+    };
+
+    // Handle form submission
+    clientForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const clientId = clientForm.dataset.clientId;
+        const clientData = {
+            cif: document.getElementById('clientCIF').value,
+            nume: document.getElementById('clientName').value,
+            email: document.getElementById('clientEmail').value,
+            telefon: document.getElementById('clientPhone').value,
+            localitate: document.getElementById('clientCity').value,
+            judet: document.getElementById('clientCounty').value,
+            adresa: document.getElementById('clientAddress').value,
+            cod_postal: document.getElementById('clientPostalCode').value,
+            website: document.getElementById('clientWebsite').value,
+            persoana_contact: document.getElementById('clientContactPerson').value,
+            observatii: document.getElementById('clientNotes').value
+        };
+
+        const url = clientId ? `/api/update_client/${clientId}` : '/api/add_client';
+        const method = clientId ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(clientData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(clientId ? 'Client actualizat cu succes!' : 'Client adăugat cu succes!');
+                loadClienti();
+                closeModal();
+            } else {
+                alert('Eroare: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Eroare:', error);
+            alert('Eroare la salvarea clientului!');
+        });
+    });
+
+    // Delete client
+    window.deleteClient = function(clientId) {
+        if (confirm('Sigur vrei să ștergi acest client?')) {
+            fetch(`/api/delete_client/${clientId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Client șters cu succes!');
+                    loadClienti();
+                } else {
+                    alert('Eroare la ștergerea clientului: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Eroare:', error);
+                alert('Eroare la ștergerea clientului!');
+            });
+        }
+    };
+
+    // Load clients on page load
+    loadClienti();
+});
+```
+
+**Modificări**:
+- Adăugat `data-stat="sold"` la `<td>` pentru coloana "Sold (RON)" în generarea rândurilor tabelului.
+
+---
+
+### Rezultat
+După aplicarea acestor modificări:
+- Coloana "Sold (RON)" va avea un spațiu suplimentar de 30px față de butoane.
+- Butoanele de editare și ștergere vor fi mai bine separate prin `margin` și `padding`.
+- Aspectul tabelului va fi mai clar și mai ușor de utilizat.
+
+Testează modificările în browser și ajustează valorile `padding` sau `margin` după necesitate pentru a obține spațierea dorită. Dacă mai ai nevoie de ajustări, spune-mi!

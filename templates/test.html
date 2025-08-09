@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API</title>
+</head>
+<body>
+    <h1>Test API SmartBill</h1>
+    
+    <h2>Test Clienți</h2>
+    <button onclick="testClients()">Test Clienți</button>
+    <div id="clients-result"></div>
+    
+    <h2>Test Produse</h2>
+    <button onclick="testProducts()">Test Produse</button>
+    <div id="products-result"></div>
+    
+    <script>
+        function testClients() {
+            console.log('Testez API clienți...');
+            fetch('/api/get_clienti')
+                .then(response => {
+                    console.log('Răspuns clienți:', response);
+                    console.log('Status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Date clienți:', data);
+                    document.getElementById('clients-result').innerHTML = 
+                        `<p>Număr clienți: ${data.length}</p>
+                         <pre>${JSON.stringify(data.slice(0, 2), null, 2)}</pre>`;
+                })
+                .catch(error => {
+                    console.error('Eroare clienți:', error);
+                    document.getElementById('clients-result').innerHTML = 
+                        `<p style="color: red;">Eroare: ${error.message}</p>`;
+                });
+        }
+        
+        function testProducts() {
+            console.log('Testez API produse...');
+            fetch('/api/get_produse')
+                .then(response => {
+                    console.log('Răspuns produse:', response);
+                    console.log('Status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Date produse:', data);
+                    document.getElementById('products-result').innerHTML = 
+                        `<p>Număr produse: ${data.length}</p>
+                         <pre>${JSON.stringify(data.slice(0, 2), null, 2)}</pre>`;
+                })
+                .catch(error => {
+                    console.error('Eroare produse:', error);
+                    document.getElementById('products-result').innerHTML = 
+                        `<p style="color: red;">Eroare: ${error.message}</p>`;
+                });
+        }
+    </script>
+</body>
+</html> 

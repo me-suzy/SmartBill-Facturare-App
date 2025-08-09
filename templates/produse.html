@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBill - Produse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <style>
+        .products-container {
+            padding: 30px;
+        }
+        
+        .products-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .products-title {
+            font-size: 24px;
+            color: var(--dark);
+            font-weight: 300;
+        }
+        
+        .add-product-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .add-product-btn:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+        
+        .products-table {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 500;
+        }
+        
+        .table-content {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .product-row {
+            display: grid;
+            grid-template-columns: 80px 120px 2fr 100px 120px 120px 100px 120px 100px;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+		
+		/* Păstrează hover pentru rândurile normale */
+		.product-row:hover {
+			background: #f8f9fa;
+		}
+
+		/* Dezactivează hover doar pentru antet */
+		.table-header .product-row:hover {
+			background: transparent !important;
+		}
+        
+        .product-row:last-child {
+            border-bottom: none;
+        }
+        
+        .product-id {
+            font-weight: 500;
+            color: var(--primary);
+        }
+        
+        .product-code {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .product-name {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .product-category {
+            background: var(--light);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .product-price {
+            font-weight: 500;
+            color: var(--success);
+        }
+        
+        .product-stock {
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .stock-low {
+            color: var(--danger);
+        }
+        
+        .stock-ok {
+            color: var(--success);
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: var(--transition);
+        }
+        
+        .edit-btn {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .edit-btn:hover {
+            background: #e67e22;
+        }
+        
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 30px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        /* Asigură că butoanele sunt mereu vizibile */
+        .modal-actions {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            color: var(--dark);
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: var(--dark);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            border-top: 4px solid var(--primary);
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 300;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Loading indicator */
+        .loading::after {
+            content: "Încărcare...";
+            display: block;
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* Toast notifications customization */
+        .toast-success {
+            background-color: var(--success) !important;
+        }
+        
+        .toast-error {
+            background-color: var(--danger) !important;
+        }
+        
+        .toast-warning {
+            background-color: var(--warning) !important;
+        }
+        
+		.toast-info {
+					background-color: var(--primary) !important;
+				}
+				
+/* CSS pentru mesajul de succes */
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            z-index: 9999;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .success-message .icon {
+            font-size: 18px;
+        }
+
+        .success-message.fade-out {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h2>💰 SmartBill</h2>
+                <span>FACTURARE</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item">📊 Dashboard</a>
+                <div class="nav-group">
+                    <span class="nav-title">📄 Emitere</span>
+                    <a href="/factura" class="nav-subitem">Factură</a>
+                    <a href="/bon-fiscal" class="nav-subitem">Bon Fiscal</a>
+                    <a href="/factura-storno" class="nav-subitem">Factură Storno</a>
+                </div>
+                <a href="/rapoarte" class="nav-item">📈 Rapoarte</a>
+                <a href="/configurare" class="nav-item">⚙️ Configurare</a>
+                <div class="nav-group">
+                    <span class="nav-title">📝 Nomenclatoare</span>
+                    <a href="/produse" class="nav-subitem active">Produse</a>
+                    <a href="/clienti" class="nav-subitem">Clienți</a>
+                </div>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <header>
+                <h1>Produse</h1>
+                <div class="user-info">
+                    <span>TIP B. SRL</span>
+                </div>
+            </header>
+
+            <div class="products-container">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-products">0</div>
+                        <div class="stat-label">Total Produse</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="low-stock">0</div>
+                        <div class="stat-label">Stoc Scăzut</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-value">0</div>
+                        <div class="stat-label">Valoare Totală (RON)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="categories">0</div>
+                        <div class="stat-label">Categorii</div>
+                    </div>
+                </div>
+
+                <div class="products-header">
+                    <h2 class="products-title">Lista Produse</h2>
+                    <button class="add-product-btn" onclick="openAddModal()">
+                        ➕ Adaugă Produs
+                    </button>
+                </div>
+
+                <div class="products-table">
+                    <div class="table-header">
+                        <div class="product-row">
+                            <div>ID</div>
+                            <div>Cod</div>
+                            <div>Denumire</div>
+                            <div>UM</div>
+                            <div>Preț Vânzare</div>
+                            <div>Preț Achiziție</div>
+                            <div>Stoc</div>
+                            <div>Categorie</div>
+                            <div>Acțiuni</div>
+                        </div>
+                    </div>
+                    <div class="table-content" id="products-table-body">
+                        <!-- Produsele vor fi încărcate dinamic -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pentru adăugare/editare produs -->
+    <div id="produsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Adaugă Produs Nou</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="produsForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Cod Produs</label>
+                        <input type="text" class="form-input" id="productCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Denumire</label>
+                        <input type="text" class="form-input" id="productName" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Unitate de Măsură</label>
+                        <select class="form-input" id="productUM" required>
+                            <option value="">Selectează UM</option>
+                            <option value="buc">Bucată</option>
+                            <option value="kg">Kilogram</option>
+                            <option value="l">Litr</option>
+                            <option value="m">Metru</option>
+                            <option value="mp">Metru pătrat</option>
+                            <option value="mc">Metru cub</option>
+                            <option value="ore">Ore</option>
+                            <option value="zi">Zile</option>
+                            <option value="licență">Licență</option>
+                            <option value="pachet">Pachet</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Categorie</label>
+                        <select class="form-input" id="productCategory" required>
+                            <option value="">Selectează Categoria</option>
+                            <option value="Hardware">Hardware</option>
+                            <option value="Software">Software</option>
+                            <option value="Servicii IT">Servicii IT</option>
+                            <option value="Consumabile">Consumabile</option>
+                            <option value="Servicii">Servicii</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Preț Vânzare (RON)</label>
+                        <input type="number" step="0.01" class="form-input" id="productPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Preț Achiziție (RON)</label>
+                        <input type="number" step="0.01" class="form-input" id="productCost" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Stoc</label>
+                        <input type="number" class="form-input" id="productStock" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Stoc Minim</label>
+                        <input type="number" class="form-input" id="productMinStock" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descriere</label>
+                    <textarea class="form-input" id="productDescription" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Anulează</button>
+                    <button type="submit" class="btn-primary" id="saveProdusBtn">
+                        <i class="fas fa-save"></i> Salvează Produs
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Initialize toastr
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000",
+            "extendedTimeOut": "2000"
+        };
+
+// Funcții pentru mesajul de succes și gestionarea modal-urilor
+        function showSuccessMessage(message) {
+            const existingMessages = document.querySelectorAll('.success-message');
+            existingMessages.forEach(msg => msg.remove());
+
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `<i class="fas fa-check-circle icon"></i><span>${message}</span>`;
+            document.body.appendChild(successDiv);
+
+            setTimeout(() => {
+                successDiv.classList.add('fade-out');
+                setTimeout(() => { 
+                    if (successDiv.parentNode) successDiv.parentNode.removeChild(successDiv); 
+                }, 300);
+            }, 2000);
+        }
+
+        function resetForm(formId) {
+            const form = document.getElementById(formId);
+            if (form) form.reset();
+        }
+
+        function handleSaveSuccess(message, modalId, formId = null, reloadTable = null) {
+            showSuccessMessage(message);
+            if (modalId) closeModal();
+            if (formId) setTimeout(() => resetForm(formId), 300);
+            if (reloadTable && typeof reloadTable === 'function') setTimeout(reloadTable, 500);
+        }
+		
+        let products = [];
+        let editingProductId = null;
+
+        // Încarcă produsele la pornirea paginii
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+        });
+
+        function loadProducts() {
+            console.log('Încerc să încarc produsele...');
+            fetch('/api/get_produse')
+                .then(response => {
+                    console.log('Răspuns primit pentru produse:', response);
+                    console.log('Status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Date produse primite:', data);
+                    console.log('Număr produse:', data.length);
+                    products = data;
+                    displayProducts();
+                    updateStats();
+                })
+                .catch(error => {
+                    console.error('Eroare la încărcarea produselor:', error);
+                    toastr.error('Nu s-au putut încărca produsele: ' + error.message);
+                });
+        }
+
+        function displayProducts() {
+            const tableBody = document.getElementById('products-table-body');
+            tableBody.innerHTML = '';
+
+            products.forEach(product => {
+                const row = document.createElement('div');
+                row.className = 'product-row';
+                
+                const stockClass = product.Stoc <= product.Stoc_Minim ? 'stock-low' : 'stock-ok';
+                
+                row.innerHTML = `
+                    <div class="product-id">${product.ID}</div>
+                    <div class="product-code">${product.Cod}</div>
+                    <div class="product-name">${product.Denumire}</div>
+                    <div>${product.UM}</div>
+                    <div class="product-price">${product.Pret_Vanzare.toFixed(2)} RON</div>
+                    <div>${product.Pret_Achizitie.toFixed(2)} RON</div>
+                    <div class="product-stock ${stockClass}">${product.Stoc}</div>
+                    <div class="product-category">${product.Categorie}</div>
+                    <div class="product-actions">
+                        <button class="action-btn edit-btn" onclick="editProduct(${product.ID})">✏️</button>
+                        <button class="action-btn delete-btn" onclick="deleteProduct(${product.ID})">🗑️</button>
+                    </div>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        function updateStats() {
+            const totalProducts = products.length;
+            const lowStock = products.filter(p => p.Stoc <= p.Stoc_Minim).length;
+            const totalValue = products.reduce((sum, p) => sum + (p.Pret_Vanzare * p.Stoc), 0);
+            const categories = new Set(products.map(p => p.Categorie)).size;
+
+            document.getElementById('total-products').textContent = totalProducts;
+            document.getElementById('low-stock').textContent = lowStock;
+            document.getElementById('total-value').textContent = totalValue.toFixed(2);
+            document.getElementById('categories').textContent = categories;
+        }
+
+        function openAddModal() {
+            editingProductId = null;
+            document.getElementById('modalTitle').textContent = 'Adaugă Produs Nou';
+            document.getElementById('produsForm').reset();
+            document.getElementById('produsModal').style.display = 'block';
+        }
+
+        function editProduct(productId) {
+            const product = products.find(p => p.ID === productId);
+            if (!product) return;
+
+            editingProductId = productId;
+            document.getElementById('modalTitle').textContent = 'Editează Produs';
+            
+            // Populează formularul
+            document.getElementById('productCode').value = product.Cod;
+            document.getElementById('productName').value = product.Denumire;
+            document.getElementById('productUM').value = product.UM;
+            document.getElementById('productCategory').value = product.Categorie;
+            document.getElementById('productPrice').value = product.Pret_Vanzare;
+            document.getElementById('productCost').value = product.Pret_Achizitie;
+            document.getElementById('productStock').value = product.Stoc;
+            document.getElementById('productMinStock').value = product.Stoc_Minim;
+            document.getElementById('productDescription').value = product.Descriere || '';
+
+            document.getElementById('produsModal').style.display = 'block';
+        }
+
+function closeModal() {
+            document.getElementById('produsModal').style.display = 'none';
+            editingProductId = null;
+        }
+
+        function deleteProduct(productId) {
+            if (!confirm('Ești sigur că vrei să ștergi acest produs?')) return;
+
+            fetch(`/api/delete_produs/${productId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessMessage('Produs șters cu succes!');
+                    loadProducts();
+                } else {
+                    toastr.error(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Eroare la ștergerea produsului:', error);
+                toastr.error('Nu s-a putut șterge produsul');
+            });
+        }
+
+// Gestionează trimiterea formularului
+        document.getElementById('produsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const productData = {
+                cod: document.getElementById('productCode').value,
+                denumire: document.getElementById('productName').value,
+                um: document.getElementById('productUM').value,
+                categorie: document.getElementById('productCategory').value,
+                pret_vanzare: parseFloat(document.getElementById('productPrice').value),
+                pret_achizitie: parseFloat(document.getElementById('productCost').value),
+                stoc: parseInt(document.getElementById('productStock').value),
+                stoc_minim: parseInt(document.getElementById('productMinStock').value),
+                descriere: document.getElementById('productDescription').value
+            };
+
+            const url = editingProductId ? `/api/update_produs/${editingProductId}` : '/api/add_produs';
+            const method = editingProductId ? 'PUT' : 'POST';
+
+            console.log('Trimit datele produsului:', productData);
+            console.log('URL:', url);
+            console.log('Method:', method);
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(productData)
+            })
+            .then(response => {
+                console.log('Răspuns produs primit:', response);
+                console.log('Status produs:', response.status);
+                return response.json();
+            })
+.then(data => {
+                if (data.success) {
+                    const message = editingProductId ? 'Produs actualizat cu succes!' : 'Produs adăugat cu succes!';
+                    
+                    // Nouă funcționalitate: mesaj de succes și închidere automată
+                    handleSaveSuccess(message, 'produsModal', 'produsForm', loadProducts);
+                } else {
+                    toastr.error(data.message || 'Eroare necunoscută');
+                }
+            })
+            .catch(error => {
+                console.error('Eroare la salvare:', error);
+                toastr.error('Nu s-a putut salva produsul: ' + error.message);
+            });
+        });
+
+        // Modalul se închide doar prin butoanele "Anulează" sau "Salvează"
+        // Eliminat închiderea la click în afara modalului pentru o experiență mai bună
+    </script>
+</body>
+</html>

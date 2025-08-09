@@ -1,0 +1,58 @@
+# Fișiere sensibile SmartBill
+*token*
+*secret*
+*key*
+.env
+*.pem
+*.p12
+*.pfx
+
+# Backup-uri Excel (pot fi foarte mari)
+*.backup_*
+database/*.backup_*
+
+# Fișiere temporare Excel
+~$*.xlsx
+~$*.xls
+
+# Archive files
+*.rar
+*.zip
+*.7z
+
+# Fișiere Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Fișiere IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Fișiere sistem
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Fișiere temporare
+*.tmp
+*.temp
+*.log
+
+# Flask
+instance/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database sensibile (dacă există)
+*.db
+*.sqlite
+*.sqlite3

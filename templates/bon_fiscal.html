@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBill - Bon Fiscal</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --border: #bdc3c7;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        .receipt-container {
+            padding: 30px;
+        }
+        
+        .receipt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .receipt-title {
+            font-size: 24px;
+            color: var(--dark);
+            font-weight: 300;
+        }
+        
+        .receipt-form {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            transition: var(--transition);
+            box-sizing: border-box;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+            box-sizing: border-box;
+        }
+        
+        .items-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        
+        .add-item-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+        
+        .add-item-btn:hover {
+            background: #229954;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .items-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 500;
+        }
+        
+        .items-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            background: white;
+        }
+        
+        .items-table tr:hover td {
+            background: #f8f9fa;
+        }
+        
+        .item-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .remove-item-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: var(--transition);
+        }
+        
+        .remove-item-btn:hover {
+            background: #c0392b;
+        }
+        
+        .totals-section {
+            background: var(--light);
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-top: 20px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .total-row.final {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark);
+            border-top: 2px solid var(--border);
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        
+        .payment-section {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-top: 20px;
+        }
+        
+        .payment-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            position: sticky;
+            bottom: 0;
+            background: white;
+            z-index: 10;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-success:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .receipt-preview {
+            background: #f8f9fa;
+            border: 2px dashed var(--border);
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .receipt-preview h4 {
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+        
+        .receipt-preview p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            z-index: 9999;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .success-message .icon {
+            font-size: 18px;
+        }
+
+        .success-message.fade-out {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+        /* Basic sidebar styling */
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+
+        .logo h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .logo span {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .nav-menu {
+            margin-top: 30px;
+        }
+
+        .nav-item, .nav-subitem {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .nav-item:hover, .nav-subitem:hover {
+            background: #34495e;
+        }
+
+        .nav-subitem.active {
+            background: #3498db;
+        }
+
+        .nav-title {
+            color: #bdc3c7;
+            font-size: 12px;
+            margin: 20px 0 10px 0;
+            text-transform: uppercase;
+        }
+
+        .main-content {
+            flex: 1;
+            background: #f8f9fa;
+        }
+
+        header {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .user-info {
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h2>💰 SmartBill</h2>
+                <span>FACTURARE</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="/dashboard" class="nav-item">📊 Dashboard</a>
+                <div class="nav-group">
+                    <span class="nav-title">📄 Emitere</span>
+                    <a href="/factura" class="nav-subitem">Factură</a>
+                    <a href="/bon-fiscal" class="nav-subitem active">Bon Fiscal</a>
+                    <a href="/factura-storno" class="nav-subitem">Factură Storno</a>
+                </div>
+                <a href="/rapoarte" class="nav-item">📈 Rapoarte</a>
+                <a href="/configurare" class="nav-item">⚙️ Configurare</a>
+                <div class="nav-group">
+                    <span class="nav-title">📝 Nomenclatoare</span>
+                    <a href="/produse" class="nav-subitem">Produse</a>
+                    <a href="/clienti" class="nav-subitem">Clienți</a>
+                </div>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <header>
+                <h1>Bon Fiscal</h1>
+                <div class="user-info">
+                    <span>TIP B. SRL</span>
+                </div>
+            </header>
+
+            <div class="receipt-container">
+                <div class="receipt-header">
+                    <h2 class="receipt-title">Bon Fiscal Nou</h2>
+                </div>
+
+                <form id="receiptForm" class="receipt-form">
+                    <!-- Informații Bon Fiscal -->
+                    <div class="form-section">
+                        <h3 class="section-title">Informații Bon Fiscal</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Număr Bon</label>
+                                <input type="text" class="form-input" id="receiptNumber" value="BF-001" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data Emiterii</label>
+                                <input type="date" class="form-input" id="receiptDate" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Ora Emiterii</label>
+                                <input type="time" class="form-input" id="receiptTime" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Operator</label>
+                                <select class="form-select" id="operator">
+                                    <option value="Operator 1">Operator 1</option>
+                                    <option value="Operator 2">Operator 2</option>
+                                    <option value="Operator 3">Operator 3</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informații Client -->
+                    <div class="form-section">
+                        <h3 class="section-title">Informații Client</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Nume Client</label>
+                                <input type="text" class="form-input" id="clientName" placeholder="Nume client (opțional)">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="clientEmail" placeholder="Email client (opțional)">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefon</label>
+                            <input type="tel" class="form-input" id="clientPhone" placeholder="Telefon client (opțional)">
+                        </div>
+                    </div>
+
+                    <!-- Articole -->
+                    <div class="form-section">
+                        <h3 class="section-title">Articole</h3>
+                        <div class="items-section">
+                            <button type="button" class="add-item-btn" id="addItemButton">
+                                ➕ Adaugă Articol
+                            </button>
+                            <table class="items-table" id="itemsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Denumire</th>
+                                        <th>UM</th>
+                                        <th>Cantitate</th>
+                                        <th>Preț Unitar</th>
+                                        <th>TVA %</th>
+                                        <th>Valoare</th>
+                                        <th>Acțiuni</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                    <!-- Rândurile de articole vor fi adăugate dinamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Totaluri -->
+                    <div class="totals-section">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">0.00 RON</span>
+                        </div>
+                        <div class="total-row">
+                            <span>TVA:</span>
+                            <span id="tva">0.00 RON</span>
+                        </div>
+                        <div class="total-row final">
+                            <span>TOTAL:</span>
+                            <span id="total">0.00 RON</span>
+                        </div>
+                    </div>
+
+                    <!-- Plată -->
+                    <div class="payment-section">
+                        <h3 class="section-title">Informații Plată</h3>
+                        <div class="payment-row">
+                            <div class="form-group">
+                                <label class="form-label">Metoda de Plată</label>
+                                <select class="form-select" id="paymentMethod" required>
+                                    <option value="Numerar">Numerar</option>
+                                    <option value="Card">Card</option>
+                                    <option value="Transfer bancar">Transfer bancar</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Suma Primită</label>
+                                <input type="number" step="0.01" class="form-input" id="amountReceived" placeholder="0.00" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Rest</label>
+                            <input type="text" class="form-input" id="change" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Observații -->
+                    <div class="form-section">
+                        <h3 class="section-title">Observații</h3>
+                        <div class="form-group">
+                            <textarea class="form-textarea" id="receiptNotes" placeholder="Observații pentru bon fiscal..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Acțiuni -->
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="window.location.href='/dashboard'">
+                            Anulează
+                        </button>
+                        <button type="button" class="btn-secondary" id="previewButton">
+                            Previzualizare
+                        </button>
+                        <button type="submit" class="btn-success" id="saveBonBtn">
+                            <i class="fas fa-receipt"></i> Emite Bon Fiscal
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Previzualizare Bon Fiscal -->
+                <div class="receipt-preview" id="receiptPreview" style="display: none;">
+                    <h4>Previzualizare Bon Fiscal</h4>
+                    <p>Bon fiscal va fi emis cu următoarele informații:</p>
+                    <div id="previewContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variabile globale
+        let products = [];
+        let itemCounter = 0;
+
+        // Funcții pentru mesajul de succes
+        function showSuccessMessage(message) {
+            const existingMessages = document.querySelectorAll('.success-message');
+            existingMessages.forEach(msg => msg.remove());
+
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.innerHTML = `<i class="fas fa-check-circle icon"></i><span>${message}</span>`;
+            document.body.appendChild(successDiv);
+
+            setTimeout(() => {
+                successDiv.classList.add('fade-out');
+                setTimeout(() => { 
+                    if (successDiv.parentNode) successDiv.parentNode.removeChild(successDiv); 
+                }, 300);
+            }, 2000);
+        }
+
+        function showErrorMessage(message) {
+            alert('❌ Eroare: ' + message);
+        }
+
+        function showWarningMessage(message) {
+            alert('⚠️ Atenție: ' + message);
+        }
+
+        // Generare număr bon unic
+        function generateReceiptNumber() {
+            const now = new Date();
+            const timestamp = now.getTime();
+            const shortId = timestamp.toString().slice(-6);
+            return `BF-${shortId}`;
+        }
+
+        // Setare oră curentă
+        function setCurrentTime() {
+            const now = new Date();
+            const timeString = now.toTimeString().slice(0, 5);
+            const dateString = now.toISOString().slice(0, 10);
+            
+            document.getElementById('receiptTime').value = timeString;
+            document.getElementById('receiptDate').value = dateString;
+        }
+
+        // Încărcare produse din API
+        function loadProducts() {
+            console.log('Încărcare produse...');
+            fetch('/api/get_produse')
+                .then(response => {
+                    console.log('API Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    products = data;
+                    console.log('Produse încărcate:', products.length);
+                })
+                .catch(error => {
+                    console.error('Eroare la încărcarea produselor:', error);
+                    products = [];
+                });
+        }
+
+        // Adăugare rând nou la tabelul de articole
+        function addItemRow() {
+            console.log('Adăugare rând articol:', itemCounter);
+            const tbody = document.getElementById('itemsTableBody');
+            const row = document.createElement('tr');
+            row.id = `item-row-${itemCounter}`;
+            
+            row.innerHTML = `
+                <td>
+                    <input type="text" class="item-input" id="item-name-${itemCounter}" placeholder="Denumire articol" required>
+                </td>
+                <td>
+                    <select class="item-input" id="item-um-${itemCounter}">
+                        <option value="buc">buc</option>
+                        <option value="kg">kg</option>
+                        <option value="l">l</option>
+                        <option value="m">m</option>
+                        <option value="mp">mp</option>
+                        <option value="mc">mc</option>
+                        <option value="ore">ore</option>
+                        <option value="zi">zi</option>
+                        <option value="licență">licență</option>
+                        <option value="pachet">pachet</option>
+                    </select>
+                </td>
+                <td><input type="number" class="item-input" id="item-qty-${itemCounter}" value="1" min="1" step="0.01"></td>
+                <td><input type="number" class="item-input" id="item-price-${itemCounter}" step="0.01" placeholder="0.00" min="0"></td>
+                <td><input type="number" class="item-input" id="item-tva-${itemCounter}" value="19" min="0" max="100"></td>
+                <td><input type="text" class="item-input" id="item-total-${itemCounter}" readonly></td>
+                <td>
+                    <button type="button" class="remove-item-btn" onclick="removeItemRow(${itemCounter})">
+                        🗑️
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            
+            // Adaugă event listeners pentru calculul totalurilor
+            const currentIndex = itemCounter;
+            row.querySelector(`#item-qty-${currentIndex}`).addEventListener('input', () => calculateItemTotal(currentIndex));
+            row.querySelector(`#item-price-${currentIndex}`).addEventListener('input', () => calculateItemTotal(currentIndex));
+            row.querySelector(`#item-tva-${currentIndex}`).addEventListener('input', () => calculateItemTotal(currentIndex));
+            
+            itemCounter++;
+            console.log('Rând adăugat cu succes. Total rânduri:', itemCounter);
+        }
+
+        // Calculare total pentru un articol specific
+        function calculateItemTotal(itemIndex) {
+            const qty = parseFloat(document.getElementById(`item-qty-${itemIndex}`).value) || 0;
+            const price = parseFloat(document.getElementById(`item-price-${itemIndex}`).value) || 0;
+            const tvaPercent = parseFloat(document.getElementById(`item-tva-${itemIndex}`).value) || 0;
+            
+            const subtotal = qty * price;
+            const tva = subtotal * (tvaPercent / 100);
+            const total = subtotal + tva;
+            
+            document.getElementById(`item-total-${itemIndex}`).value = total.toFixed(2);
+            calculateReceiptTotals();
+            calculateChange();
+        }
+
+        // Ștergere rând articol
+        function removeItemRow(itemIndex) {
+            const row = document.getElementById(`item-row-${itemIndex}`);
+            if (row) {
+                row.remove();
+                calculateReceiptTotals();
+                calculateChange();
+                console.log('Rând șters:', itemIndex);
+            }
+        }
+
+        // Calculare totaluri pentru întreg bonul
+        function calculateReceiptTotals() {
+            let subtotal = 0;
+            let tva = 0;
+            
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            rows.forEach(row => {
+                const qty = parseFloat(row.querySelector('input[id^="item-qty-"]').value) || 0;
+                const price = parseFloat(row.querySelector('input[id^="item-price-"]').value) || 0;
+                const tvaPercent = parseFloat(row.querySelector('input[id^="item-tva-"]').value) || 0;
+                
+                const rowSubtotal = qty * price;
+                const rowTva = rowSubtotal * (tvaPercent / 100);
+                
+                subtotal += rowSubtotal;
+                tva += rowTva;
+            });
+            
+            const total = subtotal + tva;
+            
+            document.getElementById('subtotal').textContent = subtotal.toFixed(2) + ' RON';
+            document.getElementById('tva').textContent = tva.toFixed(2) + ' RON';
+            document.getElementById('total').textContent = total.toFixed(2) + ' RON';
+            
+            console.log('Totaluri calculate:', { subtotal, tva, total });
+        }
+
+		// Calculare rest
+		function calculateChange() {
+			const totalText = document.getElementById('total').textContent.replace(' RON', '');
+			const total = parseFloat(totalText) || 0;
+			const received = parseFloat(document.getElementById('amountReceived').value) || 0;
+			const change = received - total;
+			
+			if (received === 0) {
+				document.getElementById('change').value = '';
+			} else if (change >= 0) {
+				// Client a plătit suficient - afișează restul
+				document.getElementById('change').value = change.toFixed(2) + ' RON';
+			} else {
+				// Client nu a plătit suficient - afișează cât lipsește
+				document.getElementById('change').value = `Lipsesc ${Math.abs(change).toFixed(2)} RON`;
+			}
+		}
+		
+        // Previzualizare bon
+        function previewReceipt() {
+            const preview = document.getElementById('receiptPreview');
+            const content = document.getElementById('previewContent');
+            
+            const receiptData = {
+                number: document.getElementById('receiptNumber').value,
+                date: document.getElementById('receiptDate').value,
+                time: document.getElementById('receiptTime').value,
+                client: document.getElementById('clientName').value || 'Client fără nume',
+                total: document.getElementById('total').textContent,
+                payment: document.getElementById('paymentMethod').value
+            };
+            
+            content.innerHTML = `
+                <p><strong>Număr:</strong> ${receiptData.number}</p>
+                <p><strong>Data:</strong> ${receiptData.date} ${receiptData.time}</p>
+                <p><strong>Client:</strong> ${receiptData.client}</p>
+                <p><strong>Total:</strong> ${receiptData.total}</p>
+                <p><strong>Metoda plată:</strong> ${receiptData.payment}</p>
+            `;
+            
+            preview.style.display = 'block';
+            preview.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Reset formular
+        function resetBonForm() {
+            document.getElementById('receiptForm').reset();
+            document.getElementById('itemsTableBody').innerHTML = '';
+            document.getElementById('receiptPreview').style.display = 'none';
+            itemCounter = 0;
+            setCurrentTime();
+            
+            // Generează nou număr de bon
+            document.getElementById('receiptNumber').value = generateReceiptNumber();
+            
+            addItemRow();
+            calculateReceiptTotals();
+        }
+
+        // Validare formular
+        function validateForm() {
+            const itemRows = document.querySelectorAll('#itemsTableBody tr');
+            if (itemRows.length === 0) {
+                showWarningMessage('Adaugă cel puțin un articol pentru a emite bonul fiscal!');
+                return false;
+            }
+
+            let hasValidItems = false;
+            itemRows.forEach(row => {
+                const name = row.querySelector('input[id^="item-name-"]').value.trim();
+                const price = parseFloat(row.querySelector('input[id^="item-price-"]').value) || 0;
+                if (name && price > 0) {
+                    hasValidItems = true;
+                }
+            });
+
+            if (!hasValidItems) {
+                showWarningMessage('Completează toate articolele cu denumire și preț valid!');
+                return false;
+            }
+
+            return true;
+        }
+		
+		// Funcție pentru salvarea produselor noi în baza de date
+		async function saveNewProducts(items) {
+			const newProducts = [];
+			
+			for (const item of items) {
+				// Verifică dacă produsul există deja
+				const existingProduct = products.find(p => 
+					p.Denumire.toLowerCase() === item.denumire.toLowerCase()
+				);
+				
+				if (!existingProduct) {
+					// Produsul nu există, îl adăugăm la lista de produse noi
+					const newProduct = {
+						cod: `PROD-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+						denumire: item.denumire,
+						um: item.um,
+						pret_vanzare: item.pret_unitar,
+						pret_achizitie: item.pret_unitar * 0.8, // 80% din prețul de vânzare
+						tva_procent: item.tva_procent,
+						categorie: 'Bon Fiscal',
+						stoc: 999,
+						stoc_minim: 0,
+						descriere: `Produs adăugat din bon fiscal ${document.getElementById('receiptNumber').value}`,
+						furnizor: 'Intern',
+						observatii: 'Adăugat automat din bon fiscal'
+					};
+					
+					newProducts.push(newProduct);
+				}
+			}
+			
+			// Salvează produsele noi în baza de date
+			if (newProducts.length > 0) {
+				try {
+					for (const product of newProducts) {
+						await fetch('/api/add_produs', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify(product)
+						});
+					}
+					console.log(`✅ ${newProducts.length} produse noi adăugate automat`);
+				} catch (error) {
+					console.error('❌ Eroare la salvarea produselor noi:', error);
+				}
+			}
+		}
+
+		// Salvare bon fiscal
+		async function saveBonFiscal() {
+
+            console.log('=== SAVE BON FISCAL TRIGGERED ===');
+            
+            if (!validateForm()) {
+                return;
+            }
+
+            // Colectare date pentru articole
+            const items = [];
+            const itemRows = document.querySelectorAll('#itemsTableBody tr');
+            
+            itemRows.forEach(row => {
+                const name = row.querySelector('input[id^="item-name-"]').value.trim();
+                const um = row.querySelector('select[id^="item-um-"]').value;
+                const qty = parseFloat(row.querySelector('input[id^="item-qty-"]').value) || 1;
+                const price = parseFloat(row.querySelector('input[id^="item-price-"]').value) || 0;
+                const tva = parseFloat(row.querySelector('input[id^="item-tva-"]').value) || 19;
+                
+                if (name && price > 0) {
+                    items.push({
+                        denumire: name,
+                        um: um,
+                        cantitate: qty,
+                        pret_unitar: price,
+                        tva_procent: tva,
+                        valoare: qty * price * (1 + tva/100)
+                    });
+                }
+            });
+			
+			// Salvează produsele noi în baza de date
+			await saveNewProducts(items);
+
+			const total = parseFloat(document.getElementById('total').textContent.replace(' RON', ''));
+			const sumaPrimita = parseFloat(document.getElementById('amountReceived').value) || 0;
+			const rest = sumaPrimita - total;
+
+			const receiptData = {
+				numar_bon: document.getElementById('receiptNumber').value,
+				data_emitere: document.getElementById('receiptDate').value,
+				ora_emitere: document.getElementById('receiptTime').value,
+				operator: document.getElementById('operator').value,
+				client_nume: document.getElementById('clientName').value || 'Client fără nume',
+				client_email: document.getElementById('clientEmail').value || '',
+				client_telefon: document.getElementById('clientPhone').value || '',
+				subtotal: parseFloat(document.getElementById('subtotal').textContent.replace(' RON', '')),
+				tva: parseFloat(document.getElementById('tva').textContent.replace(' RON', '')),
+				total: total,
+				metoda_plata: document.getElementById('paymentMethod').value,
+				suma_primita: sumaPrimita,
+				rest: rest,
+				observatii: document.getElementById('receiptNotes').value,
+				items: items
+			};
+            console.log('Trimit datele bonului fiscal:', receiptData);
+            
+            // Dezactivează butonul pentru a preveni dubla trimitere
+            const saveBtn = document.getElementById('saveBonBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se salvează...';
+            
+            fetch('/api/save_bon_fiscal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(receiptData)
+            })
+            .then(response => {
+                console.log('Răspuns bon fiscal primit:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('=== RĂSPUNS DE LA SERVER ===');
+                console.log('Data received:', data);
+                
+                if (data.success) {
+                    console.log('✅ Success - showing message');
+                    showSuccessMessage('Bon fiscal emis cu succes!');
+                    
+                    // După 2 secunde, resetează formularul și redirecționează
+                    setTimeout(() => {
+                        resetBonForm();
+                        window.location.href = '/dashboard';
+                    }, 2000);
+                } else {
+                    showErrorMessage(data.message || 'Eroare necunoscută');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Eroare la salvarea bonului fiscal:', error);
+                showErrorMessage('Nu s-a putut salva bonul fiscal: ' + error.message);
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            });
+        }
+
+        // Inițializare la încărcarea paginii
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== PAGE LOADED ===');
+            
+            // Test de conectivitate API
+            console.log('Testing API connection...');
+            fetch('/api/get_produse')
+                .then(response => {
+                    console.log('API Test - Status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API Test - Products loaded:', data.length || 0);
+                })
+                .catch(error => {
+                    console.error('❌ API Test failed:', error);
+                });
+            
+            // Inițializare
+            loadProducts();
+            setCurrentTime();
+            
+            // Generează număr de bon automat
+            document.getElementById('receiptNumber').value = generateReceiptNumber();
+            
+            // Adaugă primul rând de articol
+            addItemRow();
+            
+            // Event listeners
+            document.getElementById('addItemButton').addEventListener('click', addItemRow);
+            document.getElementById('previewButton').addEventListener('click', previewReceipt);
+            document.getElementById('amountReceived').addEventListener('input', calculateChange);
+            
+            // Form submit
+            document.getElementById('receiptForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveBonFiscal();
+            });
+            
+            console.log('✅ Inițializare completă!');
+        });
+    </script>
+</body>
+</html>
